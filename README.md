@@ -6,4 +6,4 @@
 	Запрос на создание комнаты (протокол http)
 	Авторизация
 	
-![Uml- Client](/ChatRoom/UML-Client.png)
+![Uml- Client]("UML-Client.png")
