@@ -113,7 +113,11 @@ Class ClientMessage
               struct sockaddr_in servername;
               init_sockaddr(&servername, host.c_str(), port);
             
-  
+              if (0 > connect(sock, (struct sockaddr*)&servername, sizeof(servername))) {
+                    perror("connect (client)");
+                    exit(EXIT_FAILURE);
+                 }
+
               sendData(sock, client_msg);
               
               result_string =client.detectData(recievData(sock));
