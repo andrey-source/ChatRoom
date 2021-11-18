@@ -11,7 +11,9 @@
 
 
 class Client {
+    
     int clientID = 0;
+    string message;
     
     public:
         int createID(int clientID)
@@ -22,30 +24,28 @@ class Client {
             }
         return clientID;
         }
+        
+        string mergeData()
+        {
+            return message = str(clientID) + str("::") + message;
+        }
+        
+        void detectData(string new_message)
+        
+        {   int i = 0;
+             while(new_message[i]!="::"){
+                i++;
+                
+            }
+            client.clientID = clientID[:i];
+            message = client_msg[i:];
+        }
 } ;
 
 
 Class ClientMessage
 {
     public:
-    
-        string mergeData(Client client,string client_msg)
-        {
-            return client_msg = str(client.clientID) + str("::") + client_msg;
-        }
-        
-        string detectData(Client client,string client_msg)
-        {   int i = 0;
-            clientID = char[];
-            
-            while(client_msg!="::"){
-                clientID = client_msg[i]
-                i++;
-                
-            }
-            client.clientID = clientID;
-            return client_msg[i:];
-        }
         
         void sendData(int filedes,string client_msg) 
         {
@@ -80,8 +80,6 @@ Class ClientMessage
                                      " timeouted");
         
           return ret(buf, buf + n);
-          std::cerr << "client: " << filedes << ", recv: \n"
-                    << ret << " [" << n << " bytes]" << std::endl;
         }
     
         void init_sockaddr(struct sockaddr_in* name,const char* hostname,
@@ -102,12 +100,12 @@ Class ClientMessage
         
         
         
-        void Room(Client client, int client_count, string client_msg)
+        void Room(Client client, int client_count)
         {    
              int i = 0;
              string result_string ;
              string* arr_string = (string*)malloc(10*(string*));
-             string client_msg_new = mergeData(client,client_msg);
+             string client_msg_new = client.mergeData();
              int sock = socket(PF_INET, SOCK_STREAM, 0);
      
               std::string host(80);
@@ -118,7 +116,7 @@ Class ClientMessage
   
               sendData(sock, client_msg);
               
-              result_string = detectData(client,recievData(client));
+              result_string =client.detectData(recievData(sock));
               if (i<10){
                 arr_string[i] =result_string;
                 i++;
