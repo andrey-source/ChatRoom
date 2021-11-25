@@ -34,29 +34,31 @@ class record
 {
 public:
   record() {
-    // parameters.deviceId = adc.getDefaultInputDevice();
-    // parameters.nChannels = N_CNAHHELS;
-    // butch_size = BUFFER_SIZE;
+    parameters.deviceId = adc.getDefaultInputDevice();
+    parameters.nChannels = N_CNAHHELS;
+    butch_size = BUFFER_SIZE;
     start_flag = false;
     status = false;
   }
   bool input(std::string puth);
-  void off() {
-    while (!start_flag) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-    status = false;
-    }
-  
+  void off();  
+  void set_config();
 private:
   bool status;
   bool start_flag;
   static int recording_butch(void * /*outputBuffer*/, void *InputBuffer, unsigned int nBufferFrames,
          double /*streamTime*/, RtAudioStreamStatus /*status*/, void *userData );
-  // unsigned int butch_size;
-  // inline static RtAudio::StreamParameters parameters;
-  // RtAudio adc;
+  inline static RtAudio::StreamParameters parameters; 
+  unsigned int butch_size;
+  RtAudio adc;
 };
+
+void record::off() {
+  while (!start_flag) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    status = false;
+}
 
 int record::recording_butch(void * /*outputBuffer*/, void *InputBuffer, unsigned int nBufferFrames,
          double /*streamTime*/, RtAudioStreamStatus /*status*/, void *userData) {
@@ -65,25 +67,18 @@ int record::recording_butch(void * /*outputBuffer*/, void *InputBuffer, unsigned
   return 0;
 }
 
-
-
 bool record::input(std::string puth) {
   start_flag = true;
   status = true;
   std::ofstream file(puth, std::ios::binary);
-
   RtAudio adc1;
   if ( adc1.getDeviceCount() < 1 ) {
     std::cout << "\nNo audio devices found!\n";
     exit( 0 );
   }
-  RtAudio::StreamParameters parameters1;
-  parameters1.deviceId = adc1.getDefaultInputDevice();
-  parameters1.nChannels = N_CNAHHELS;
-  parameters1.firstChannel = 0;
   unsigned int butch_size = BUFFER_SIZE;
   try {
-    adc1.openStream(nullptr, &parameters1, FORMAT,
+    adc1.openStream(nullptr, &parameters, FORMAT,
                     SAMPLE_RATE, &butch_size, &this->recording_butch, (void*)&file);
     adc1.startStream();
   }
@@ -100,11 +95,9 @@ bool record::input(std::string puth) {
     adc1.stopStream();
   }
   catch (RtAudioError& e) {
-    std::cout << "error" << std::endl;
     e.printMessage();
   }
   if (adc1.isStreamOpen()) {
-    std::cout << "close stream" << std::endl;
     adc1.closeStream();
   }
   file.close();
@@ -143,7 +136,7 @@ bool play::output(std::string puth){
 
   std::ifstream file(puth, std::ios::binary);
   try {
-    dac.openStream(&parameters, NULL,  FORMAT,
+    dac.openStream(&parameters, nullptr,  FORMAT,
                     SAMPLE_RATE, &butch_size, &play_butch, (void*)&file);
     dac.startStream();
   }
@@ -151,7 +144,6 @@ bool play::output(std::string puth){
     e.printMessage();
     exit( 0 );
   }
-
   while ( true ) {
     // SLEEP( 100 ); // wake every 100 ms to check if we're done
     if ( dac.isStreamRunning() == false ) break;
