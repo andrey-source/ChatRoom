@@ -60,16 +60,8 @@ private:
 
 int record::recording_butch(void * /*outputBuffer*/, void *InputBuffer, unsigned int nBufferFrames,
          double /*streamTime*/, RtAudioStreamStatus /*status*/, void *userData) {
-  // FILE *file  = (FILE*)userData;
   std::ofstream *file = (std::ofstream*)userData;
-  // MY_TYPE* in = static_cast<MY_TYPE*>( InputBuffer );
-  // std::cout << in[4095 * 2] << std::endl;
   file->write((const char*)InputBuffer, sizeof(MY_TYPE) * N_CNAHHELS * nBufferFrames);
-
-  // size_t count = fwrite(InputBuffer, sizeof(MY_TYPE) * data->n_, nBufferFrames, file);
-  // if (count < nBufferFrames) {
-  //   return 1;
-  // }
   return 0;
 }
 
@@ -165,7 +157,6 @@ bool play::output(std::string puth){
     if ( dac.isStreamRunning() == false ) break;
   }
   try {
-    // Stop the stream
     dac.stopStream();
   }
   catch (RtAudioError& e) {
@@ -184,12 +175,9 @@ int main()
   bool test;
   std::thread t([&]()
   {
-    // std::cout << "thread";
     test = rec.input("test1.raw");
   });
   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
-
   rec.off();
   t.join();
 
@@ -198,19 +186,13 @@ int main()
 
     std::thread t1([&]()
   {
-    // std::cout << "thread";
     test = rec.input("test2.raw");
   });
   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
   rec.off();
+  t1.join();
 
   pl.output("test2.raw");
 
-  // rec.input("test.raw");
-  // int n;
-  // rec.off();
-
-  // play pl;
-  // pl.output("test.raw");
   return 0;
 }
