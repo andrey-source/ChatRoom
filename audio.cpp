@@ -8,10 +8,6 @@
 #include <string>
 #include <experimental/filesystem>
 
-
-
-
-
 #define INITIAL_CAPASITY 44100
 #define SAMPLE_RATE 44100
 #define BUFFER_SIZE 4096
@@ -19,15 +15,6 @@
 #define FIRTS_CHANNEL 0
 #define FORMAT RTAUDIO_SINT16
 typedef signed short MY_TYPE;
-
- #define SLEEP( milliseconds ) usleep( (unsigned long) (milliseconds * 1000.0) )
-
-
-struct io
-{
-  FILE *file;
-  size_t n_channels;
-};
 
 
 class record
@@ -46,7 +33,7 @@ public:
   }
 
   bool input(std::string  puth);
-  void off() {while (!start_flag){} status=false;};  
+  void off() {while (!start_flag){} status=false;};
   void on() {}
   void set_config(size_t device, size_t n_channels, unsigned int buffer_size, size_t first_channel, size_t Sample_rate);
 private:
@@ -55,7 +42,7 @@ private:
   bool flag_on;
   static int recording_butch(void * /*outputBuffer*/, void *InputBuffer, unsigned int nBufferFrames,
          double /*streamTime*/, RtAudioStreamStatus /*status*/, void *userData );
-  inline static RtAudio::StreamParameters parameters; 
+  inline static RtAudio::StreamParameters parameters;
   unsigned int buffer_size;
   size_t sample_rate;
   RtAudio adc;
@@ -123,53 +110,51 @@ class play
 {
   public:
   play() {
-    off_flag = false;
-    on_flag = false;
     status = false;
     current_butch = 0;
+    stream_time = 0;
     set_config(0, N_CNAHHELS, BUFFER_SIZE, FIRTS_CHANNEL, SAMPLE_RATE);
   }
   play(size_t device, size_t n_channels, unsigned int buffer_size, size_t first_channel, size_t sample_rate) {
     status = true;
-    off_flag = false;
-    on_flag = false;
     current_butch = 0;
-    last_butch = 0;
+    stream_time = 0;
     set_config(device, n_channels, buffer_size, first_channel, sample_rate);
   }
-   
-  void on() {on_flag = true;}
-  void off() {off_flag = true;}
-  void close() {off_flag = true; status = false; on_flag = false;};
-  bool check_progress() {return false;};
-  double duratin(std::string);
 
-  void set_time() {current_butch = 100;};
+  void off() {status = false;}
+  double Stream_time() {return stream_time;};
+  void set_file(std::string puth);
+  void set_time(double percentage) {
+    current_butch = duration * percentage * sample_rate  / buffer_size;
+  }
 
-  bool output(std::string puth);
+  bool play_file();
   void set_config(size_t device, size_t n_channels, unsigned int Buffer_size, size_t first_channel, size_t sample_rate);
 private:
   static int play_butch(void *OutputBuffer,  void */*InputBuffer*/, unsigned int nBufferFrames,
          double /*streamTime*/, RtAudioStreamStatus /*status*/, void *userData );
+
   unsigned int buffer_size;
   size_t sample_rate;
   static inline RtAudio::StreamParameters parameters;
-  size_t progress;
+  static inline double stream_time;
+  double duration;
   static inline size_t current_butch;
-  size_t last_butch;
-  bool status;  
-  bool off_flag;
-  bool on_flag;
+  bool status;
   RtAudio dac;
+  static inline std::ifstream file;
 };
 
-double play::duratin(std::string file_name) {
-  std::ifstream file(file_name, std::ios::binary | std::ios::ate);
+void play::set_file(std::string puth) {
+  file.open(puth, std::ios::binary | std::ios::ate);
+  current_butch = 0;
   size_t n_bytes = file.tellg();
-  double time = n_bytes / parameters.nChannels / sizeof(MY_TYPE) / sample_rate;
-  file.close();
-  return time;
+  duration = (double)n_bytes / parameters.nChannels / sizeof(MY_TYPE) / sample_rate;
+  std::cout << "duraion" << duration << std::endl;
 }
+
+
 
 void play::set_config(size_t device, size_t n_channels, unsigned int Buffer_size,
  size_t first_channel, size_t Sample_rate) {
@@ -185,53 +170,30 @@ void play::set_config(size_t device, size_t n_channels, unsigned int Buffer_size
 }
 
 int play::play_butch(void *OutputBuffer,  void */*InputBuffer*/, unsigned int nBufferFrames,
-         double /*streamTime*/, RtAudioStreamStatus /*status*/, void *userData ) {
-    std::ifstream *file = (std::ifstream *)userData;
-
-    file->seekg(current_butch * sizeof(MY_TYPE) * parameters.nChannels * nBufferFrames, std::ios_base::beg);
-    file->read((char*)OutputBuffer, sizeof(MY_TYPE) * parameters.nChannels * nBufferFrames);
+         double streamTime, RtAudioStreamStatus /*status1*/, void */*userData*/) {
+    file.read((char*)OutputBuffer, sizeof(MY_TYPE) * parameters.nChannels * nBufferFrames);
     current_butch++;
     std::cout << "current_butch: " << current_butch << std::endl;
-    auto read_pos = file->tellg();
-    // std::cout << read_pos << std::endl;
-    if(file->eof()){
+    if(file.eof()){
       return 1;
     }
     return 0;
 }
 
-bool play::output(std::string puth){
-  std::ifstream file(puth, std::ios::binary | std::ios::ate);
-  size_t n_bytes = file.tellg();
-  last_butch = n_bytes / parameters.nChannels / sizeof(MY_TYPE) / buffer_size;
-  file.seekg(0);
+bool play::play_file(){
+  status = true;
+  file.seekg(current_butch * sizeof(MY_TYPE) * parameters.nChannels * buffer_size, std::ios_base::beg);
   try {
     dac.openStream(&parameters, nullptr,  FORMAT,
-                    sample_rate, &buffer_size, &play_butch, (void*)&file);
-    // dac.startStream();
+                    sample_rate, &buffer_size, &play_butch, nullptr);
+    dac.startStream();
   }
   catch ( RtAudioError& e ) {
     e.printMessage();
     exit( 0 );
   }
-  while(status) {
-    if (on_flag) {
-      on_flag = false;
-      try {
-        dac.startStream();
-      }
-      catch ( RtAudioError& e ) {
-      dac.closeStream();
-      e.printMessage();
-      exit( 0 );
-      }
-    }
-    while (dac.isStreamRunning()) {
-      if (off_flag) {
-        dac.stopStream();
-        break;
-      }
-    }
+  while (status && dac.isStreamRunning()) {
+    stream_time = dac.getStreamTime();
   }
   if ( dac.isStreamOpen() ) dac.closeStream();
   file.close();
@@ -240,9 +202,8 @@ bool play::output(std::string puth){
 
 
 
-int main() 
+int main()
 {
-
   // first run
   record rec(0, 1,1024, 0, 44100);
   bool test;
@@ -255,16 +216,15 @@ int main()
   t1_1.join();
 
   play pl(0, 1,1024, 0, 44100);
-
-  std::cout << "duration: " << pl.duratin("voice_data\\test1.raw")<<std::endl;
-  pl.on();
+  pl.set_file("voice_data\\test1.raw");
+  // std::cout << "duration: " << pl.duratin("voice_data\\test1.raw")<<std::endl;
+  pl.set_time(0.9);
   std::thread t1_2([&]()
   {
-    pl.output("voice_data\\test1.raw");
+    pl.play_file();
   });
   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-  pl.set_time();
-  pl.on();
+  // pl.set_time();
   t1_2.join();
 
 
