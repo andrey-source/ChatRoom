@@ -115,11 +115,11 @@ class play
     stream_time = 0;
     set_config(0, N_CNAHHELS, BUFFER_SIZE, FIRTS_CHANNEL, SAMPLE_RATE);
   }
-  play(size_t device, size_t n_channels, unsigned int buffer_size, size_t first_channel, size_t sample_rate) {
+  play(size_t device_, size_t n_channels_, unsigned int buffer_size_, size_t first_channel_, size_t sample_rate_) {
     status = true;
     current_butch = 0;
     stream_time = 0;
-    set_config(device, n_channels, buffer_size, first_channel, sample_rate);
+    set_config(device_, n_channels_, buffer_size_, first_channel_, sample_rate_);
   }
 
   void off() {status = false;}
@@ -130,7 +130,7 @@ class play
   }
 
   bool play_file();
-  void set_config(size_t device, size_t n_channels, unsigned int Buffer_size, size_t first_channel, size_t sample_rate);
+  void set_config(size_t device_, size_t n_channels_, unsigned int buffer_size_, size_t first_channel_, size_t sample_rate_);
 private:
   static int play_butch(void *OutputBuffer,  void */*InputBuffer*/, unsigned int nBufferFrames,
          double /*streamTime*/, RtAudioStreamStatus /*status*/, void *userData );
@@ -151,22 +151,21 @@ void play::set_file(std::string puth) {
   current_butch = 0;
   size_t n_bytes = file.tellg();
   duration = (double)n_bytes / parameters.nChannels / sizeof(MY_TYPE) / sample_rate;
-  std::cout << "duraion" << duration << std::endl;
 }
 
 
 
-void play::set_config(size_t device, size_t n_channels, unsigned int Buffer_size,
- size_t first_channel, size_t Sample_rate) {
-  if (!device) {
+void play::set_config(size_t device_, size_t n_channels_, unsigned int buffer_size_,
+ size_t first_channel_, size_t sample_rate_) {
+  if (!device_) {
     parameters.deviceId = dac.getDefaultOutputDevice();
   } else {
-    parameters.deviceId = device;
+    parameters.deviceId = device_;
   }
-  sample_rate = Sample_rate;
-  parameters.nChannels = n_channels;
-  parameters.firstChannel = first_channel;
-  buffer_size = Buffer_size;
+  sample_rate = sample_rate_;
+  parameters.nChannels = n_channels_;
+  parameters.firstChannel = first_channel_;
+  buffer_size = buffer_size_;
 }
 
 int play::play_butch(void *OutputBuffer,  void */*InputBuffer*/, unsigned int nBufferFrames,
@@ -217,7 +216,6 @@ int main()
 
   play pl(0, 1,1024, 0, 44100);
   pl.set_file("voice_data\\test1.raw");
-  // std::cout << "duration: " << pl.duratin("voice_data\\test1.raw")<<std::endl;
   pl.set_time(0.9);
   std::thread t1_2([&]()
   {
