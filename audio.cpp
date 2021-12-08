@@ -8,18 +8,9 @@
 #include <unistd.h>
 #include <string>
 #include <experimental/filesystem>
-
-
 #include "audio.h"
 
 
-// #define INITIAL_CAPASITY 44100
-// #define SAMPLE_RATE 44100
-// #define BUFFER_SIZE 4096
-// #define N_CNAHHELS 2
-// #define FIRTS_CHANNEL 0
-// #define FORMAT RTAUDIO_SINT16
-// typedef signed short MY_TYPE;
 namespace audio
 {
   record::record(size_t device, size_t n_channels, unsigned int buffer_size, size_t first_channel, size_t Sample_rate) {
@@ -148,62 +139,10 @@ bool record::input(std::string puth) {
                     double streamTime, RtAudioStreamStatus /*status1*/, void */*userData*/) {
       file.read((char*)OutputBuffer, sizeof(MY_TYPE) * parameters.nChannels * nBufferFrames);
       current_butch++;
-      // std::cout << "current_butch: " << current_butch << std::endl;
       if(file.eof()){
         return 1;
       }
       return 0;
   }
-
-
 }
 
-// int main()
-// {
-//   // first run
-//   record rec(0, 1,1024, 0, 44100);
-//   bool test;
-//   std::thread t1_1([&]()
-//   {
-//     test = rec.input("../voice_data/test1.raw");
-//   });
-//   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-//   rec.off();
-//   t1_1.join();
-
-//   play pl(0, 1,1024, 0, 44100);
-//   pl.set_file("../voice_data/test1.raw");
-//   pl.set_time(0);
-//   std::thread t1_2([&]()
-//   {
-//     pl.play_file();
-//   });
-//   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-//   // pl.set_time();
-//   t1_2.join();
-
-
-
-
-
-
-
-//   // second run
-//   // std::thread t2_1([&]()
-//   // {
-//   //   test = rec.input("voice_data\\test2.raw");
-//   // });
-//   // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-//   // rec.off();
-//   // t2_1.join();
-
-//   // std::thread t2_2([&]()
-//   // {
-//   //   pl.output("voice_data\\test2.raw");
-//   // });
-//   // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-//   // pl.off();
-//   // t2_2.join();
-
-//   return 0;
-// }
