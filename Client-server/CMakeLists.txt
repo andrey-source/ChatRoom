@@ -17,9 +17,3 @@ target_link_libraries(async.http.client  ${Boost_LIBRARIES})
 #  Async HTTP Server
 add_executable(async.http.server async.http.server.h async.http.server.cpp connection.h connection.cpp)
 target_link_libraries(async.http.server  ${Boost_LIBRARIES})
-
-add_executable(simple_server  simple_server.cpp)
-target_link_libraries(simple_server  ${Boost_LIBRARIES})
-
-add_executable(simple_client  simple_client.cpp)
-target_link_libraries(simple_client ${Boost_LIBRARIES})

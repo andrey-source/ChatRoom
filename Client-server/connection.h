@@ -48,6 +48,11 @@ namespace server3 {
                               beast::error_code e,
                               std::size_t bytes_transferred);
 
+            void handle_write_first(beast::error_code e,
+                              std::size_t bytes_transferred);
+            void handle_write_last(beast::error_code e,
+                              std::size_t bytes_transferred);
+
             void do_close();
 
         private:
@@ -55,10 +60,13 @@ namespace server3 {
             //Router<Response(*)(const Request &request)> &requestRouter_;
 
             beast::tcp_stream stream_;
-            beast::multi_buffer buffer_;
-            std::string flag;
+            beast::multi_buffer buffer_File;
+            beast::flat_buffer buffer_;
+            std::string flag = "chat";
             http::request<http::string_body> request_;
             http::request<http::file_body> request_file;
+            http::response<http::string_body> res;
+            http::response<http::file_body> res_file;
             std::shared_ptr<void> res_;
         };
 } // namespace server3
