@@ -28,6 +28,9 @@ namespace audio {
         bool input(std::string  puth);
         void off();
         void on();
+        double stream_time();
+        bool get_status() {return adc.isStreamRunning();};
+        bool get_start_record() {return start_flag;}
         void set_config(size_t device, size_t n_channels, 
         unsigned int buffer_size, size_t first_channel, size_t Sample_rate);
         private:

@@ -32,8 +32,7 @@ namespace audio
 }
 
 void record::off() {while (!start_flag){} status=false;};
-
-
+double record::stream_time() {return adc.getStreamTime();};
 
 int record::recording_butch(void * /*outputBuffer*/, void *InputBuffer, unsigned int nBufferFrames,
          double /*streamTime*/, RtAudioStreamStatus /*status*/, void *userData) {
@@ -42,42 +41,54 @@ int record::recording_butch(void * /*outputBuffer*/, void *InputBuffer, unsigned
   return 0;
 }
 
+
+
 bool record::input(std::string puth) {
-  start_flag = true;
-  status = true;
+  // start_flag = true;
+  // status = true;
   std::ofstream file(puth, std::ios::binary);
-  RtAudio adc1;
-  if ( adc1.getDeviceCount() < 1 ) {
+  if ( adc.getDeviceCount() < 1 ) {
     std::cout << "\nNo audio devices found!\n";
     exit( 0 );
   }
   try {
-    adc1.openStream(nullptr, &parameters, FORMAT,
+    adc.openStream(nullptr, &parameters, FORMAT,
                     sample_rate, &buffer_size, &this->recording_butch, (void*)&file);
-    adc1.startStream();
+    adc.startStream();
   }
   catch ( RtAudioError& e ) {
     e.printMessage();
     exit( 0 );
   }
+  status = true;
+  start_flag = true;
   while (status) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    std::cout << status <<std::flush;
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    // std::cout << status <<std::flush;
   }
-  std::cout << std::endl;
+  // std::cout << std::endl;
   try {
-    adc1.stopStream();
+    adc.stopStream();
   }
   catch (RtAudioError& e) {
     e.printMessage();
   }
-  if (adc1.isStreamOpen()) {
-    adc1.closeStream();
+  if (adc.isStreamOpen()) {
+    adc.closeStream();
   }
   file.close();
   start_flag = false;
   return true;
 }
+
+
+
+
+
+
+
+
+
 
 
 

@@ -21,6 +21,9 @@ private:
   void expand_base(std::string path);
   void off() {status =false;}
   void play(std::vector<std::string> command);
+  void record(std::vector<std::string> command);
+  void time_record();
+
   std::map<std::string, std::string> local_base;
   audio::play speaker;
   audio::record microphone;
@@ -37,12 +40,10 @@ client::client(size_t device, size_t n_channels, size_t buffer_size,
 
 
 
-
-
 void client::run() {
   std::cout<<"client started" <<std::endl;
-
   while(status){
+    std::cout<<std::endl;
     std::cout<<"command:\t";
     std::vector<std::string> command;
     std::string str;
@@ -53,7 +54,6 @@ void client::run() {
       token = str.substr(0, pos);
       command.push_back(token);
       str.erase(0, pos + 1);
-
     }
     command.push_back(str);
     if (command[0] == "help") {
@@ -80,13 +80,13 @@ void client::run() {
       play(command);
       continue;
     }
-
-
+    if (command[0] == "record") {
+      record(command);
+      continue;
+    }
     std::cout << "incorrect command" << std::endl;
   }
 }
-
-
 
 void client::help() {
   std::cout << std::endl << std::endl;
@@ -120,33 +120,69 @@ void client::expand_base(std::string path) {
 }
 
 void client::play(std::vector<std::string> command) {
+  if (command.size() < 2) {
+    std::cout<<"Incorrect input" << std::endl;
+    return;
+  }
+  if (!local_base.count(command[1])) {
+    std::cout<<"There in no file with such a key. Try: expand your_directory." <<std::endl;
+    return;
+  }
   if (command.size() == 3) {
     double time = std::stod(command[2]);
       if (time > 1 || time < 0) {
         std::cout<<"incorrect time" <<std::endl;
         return;
       }
+
+      speaker.set_file(local_base[command[1]]);
       speaker.set_time(time);
+    } else {
+      speaker.set_file(local_base[command[1]]);
     }
-  speaker.set_file(local_base[command[1]]);
   std::thread th([&](){
     speaker.play_file();
   });
   th.detach();
 }
 
+void client::record(std::vector<std::string> command) {
+  if (command.size() < 2) {
+    std::cout<<"Incorrect command" << std::endl;
+    return;
+  }
+  std::string path;
+  if (command.size() == 3) {
+    path = command[2] + "/" + command[1] + ".raw";
+  } else {
+    path = "../voice_data/" + command[1] + ".raw";
+  }
+  std::cout << "to stop recording press enter" << std::endl;
+  std::thread th([&](){
+    microphone.input(path);
+  });
+  std::thread th1([&]() {
+    time_record();
+  });
+  getchar();
+  microphone.off();
+  th.join();
+  th1.join();
+  local_base[command[1]] = path;
+}
 
 
-  // first run
-//   audio::record rec(0, 1,1024, 0, 44100);
-//   bool test;
-//   std::thread t1_1([&]()
-//   {
-//     test = rec.input("../voice_data/test1.raw");
-//   });
-//   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-//   rec.off();
-//   t1_1.join();
+
+void client::time_record() {
+  while (!microphone.get_start_record()) {}  
+  std::cout<<std::fixed<<std::setprecision(1);
+  while (microphone.get_status()) { 
+    std::cout<<"\r"<<"recording time: "<<microphone.stream_time()<<std::flush;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    
+  }
+}
+
 
 
 class server
@@ -179,90 +215,14 @@ void server::show_base() {
 
 
 
-
-
-
 int main()
 {
-  // first run
-//   audio::record rec(0, 1,1024, 0, 44100);
-//   bool test;
-//   std::thread t1_1([&]()
-//   {
-//     test = rec.input("../voice_data/test1.raw");
-//   });
-//   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-//   rec.off();
-//   t1_1.join();
-
-  // audio::play pl(0, 1,1024, 0, 44100);  
-  // pl.set_file("../voice_data/test2.raw");
-  // pl.set_time(0);
-  // std::thread t1_2([&]()
-  // {
-  //   pl.play_file();
-  // });
-  // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-  // // pl.set_time();
-  // t1_2.join();
-
-
-
-// //   second run
-//   std::thread t2_1([&]()
-//   {
-//     test = rec.input("../voice_data/test2.raw");
-//   });
-//   std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-//   rec.off();
-//   t2_1.join();
-
-//   pl.set_file("../voice_data/test2.raw");
-//   pl.set_time(0.5);
-
-//   std::thread t2_2([&]()
-//   {
-//     pl.play_file();
-//   });
-//   std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-//   pl.off();
-//   t2_2.join();
-
-
-
-    std::string puth = "../voice_data";
-    std::map<std::string, std::string> map;
-
-
-    //  entry.path()<<std::endl;
-
-    // std::cout<< puths.extact("../voice_data/test2.raw");
-    // server test;
-    // test.expand_base("../voice_data");
-    // test.show_base();
-
-
-    // std::vector<std::string> test;
-    // std::string str;
-    // std::getline(std::cin, str);
-    // size_t pos = 0;
-    // std::string token;
-    // while ((pos = str.find(' ')) != std::string::npos) {
-    //   token = str.substr(0, pos);
-    //   test.push_back(token);
-    //   str.erase(0, pos + 1);
-
-    // }
-    // test.push_back(str);
-
-
-
-    // for (int i = 0; i < test.size(); i++) {
-    //   std::cout<<test[i] << std::endl;
-    // }
-
     client cl(0, 1,1024, 0, 44100);
     cl.run();
+
+    // std::cout<<"test"<<"\b";
+    // std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // std::cout<<"\b" << "test2";
 
   return 0;
 }
