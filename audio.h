@@ -52,19 +52,21 @@ namespace audio {
         play(size_t device_, size_t n_channels_, unsigned int buffer_size_, 
                                 size_t first_channel_, size_t sample_rate_);
         void off();
-        double Stream_time();
+        double current_time();
         void set_file(std::string puth);
         void set_time(double percentage);
         bool play_file();
         void set_config(size_t device_, size_t n_channels_, unsigned int buffer_size_, 
                                         size_t first_channel_, size_t sample_rate_);
+        double get_duration() {return duration;}
+        bool get_status() {return status;}
+
         private:
         static int play_butch(void *OutputBuffer,  void */*InputBuffer*/, unsigned int nBufferFrames,
                 double /*streamTime*/, RtAudioStreamStatus /*status*/, void *userData );
         unsigned int buffer_size;
         size_t sample_rate;
         static inline RtAudio::StreamParameters parameters;
-        static inline double stream_time;
         double duration;
         static inline size_t current_butch;
         bool status;

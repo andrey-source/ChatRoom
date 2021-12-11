@@ -41,8 +41,6 @@ int record::recording_butch(void * /*outputBuffer*/, void *InputBuffer, unsigned
   return 0;
 }
 
-
-
 bool record::input(std::string puth) {
   // start_flag = true;
   // status = true;
@@ -96,7 +94,6 @@ bool record::input(std::string puth) {
   play::play(size_t device_, size_t n_channels_, unsigned int buffer_size_, size_t first_channel_, size_t sample_rate_) {
     status = true;
     current_butch = 0;
-    stream_time = 0;
     set_config(device_, n_channels_, buffer_size_, first_channel_, sample_rate_);
   }
 
@@ -124,9 +121,13 @@ bool record::input(std::string puth) {
     current_butch = duration * percentage * sample_rate  / buffer_size;
   }
 
+  double play::current_time() {
+    return (double)current_butch * buffer_size * parameters.nChannels / sample_rate;
+  }
+
   void play::off() {status = false;}
 
-    bool play::play_file(){
+  bool play::play_file(){
     status = true;
     file.seekg(current_butch * sizeof(MY_TYPE) * parameters.nChannels * buffer_size, std::ios_base::beg);
     try {
@@ -139,20 +140,21 @@ bool record::input(std::string puth) {
       exit( 0 );
     }
     while (status && dac.isStreamRunning()) {
-      stream_time = dac.getStreamTime();
+      // stream_time = dac.getStreamTime();
     }
     if ( dac.isStreamOpen() ) dac.closeStream();
     file.close();
+    status = false;
     return true;
   }
 
   int play::play_butch(void *OutputBuffer,  void */*InputBuffer*/, unsigned int nBufferFrames,
                     double streamTime, RtAudioStreamStatus /*status1*/, void */*userData*/) {
       file.read((char*)OutputBuffer, sizeof(MY_TYPE) * parameters.nChannels * nBufferFrames);
-      current_butch++;
       if(file.eof()){
         return 1;
       }
+      current_butch++;
       return 0;
   }
 }

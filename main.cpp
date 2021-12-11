@@ -18,11 +18,12 @@ private:
   bool status;
   void help();
   void show_base();
-  void expand_base(std::string path);
+  void expand_base(std::vector<std::string> command);
   void off() {status =false;}
   void play(std::vector<std::string> command);
   void record(std::vector<std::string> command);
   void time_record();
+  void time_play();
 
   std::map<std::string, std::string> local_base;
   audio::play speaker;
@@ -65,11 +66,7 @@ void client::run() {
       continue;
     }
     if (command[0] == "expand") {
-      if (command.size() < 2) {
-        std::cout<<"incorrect input" << std::endl;
-        continue;
-      }
-      expand_base(command[1]);
+      expand_base(command);
       continue;
     }
     if (command[0] == "close") {
@@ -84,7 +81,7 @@ void client::run() {
       record(command);
       continue;
     }
-    std::cout << "incorrect command" << std::endl;
+    std::cout << "Incorrect command" << std::endl;
   }
 }
 
@@ -106,12 +103,16 @@ void client::show_base() {
   }
 }
 
-void client::expand_base(std::string path) {
-  if (!std::filesystem::exists(path)) {
+void client::expand_base(std::vector<std::string> command) {
+  if (command.size() < 2) {
+    std::cout<<"Incorrect input" << std::endl;
+    return;
+  }
+  if (!std::filesystem::exists(command[1])) {
     std::cout << "No such directory" << std::endl;
     return;
   }
-  for (const auto & entry : std::filesystem::directory_iterator(path)) {
+  for (const auto & entry : std::filesystem::directory_iterator(command[1])) {
     if (entry.path().extension() == ".raw") {
       local_base[entry.path().stem()] = entry.path();
     }
@@ -125,16 +126,15 @@ void client::play(std::vector<std::string> command) {
     return;
   }
   if (!local_base.count(command[1])) {
-    std::cout<<"There in no file with such a key. Try: expand your_directory." <<std::endl;
+    std::cout<<"There in no file with such a key. Try expand your_directory." <<std::endl;
     return;
   }
   if (command.size() == 3) {
     double time = std::stod(command[2]);
       if (time > 1 || time < 0) {
-        std::cout<<"incorrect time" <<std::endl;
+        std::cout<<"Incorrect time" <<std::endl;
         return;
       }
-
       speaker.set_file(local_base[command[1]]);
       speaker.set_time(time);
     } else {
@@ -143,8 +143,26 @@ void client::play(std::vector<std::string> command) {
   std::thread th([&](){
     speaker.play_file();
   });
-  th.detach();
+  std::thread th1([&](){
+    time_play();
+  });
+  th.join();
+  th1.join();
 }
+
+void client::time_play() {
+ 
+  std::cout<<std::fixed<<std::setprecision(1);
+  while (speaker.get_status()) { 
+    std::cout<<"\r"<<"play_time: "<<speaker.current_time()<<"/"<<speaker.get_duration()<<std::flush;
+    // std::cout<<"play" <<std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    
+  }
+}
+
+
+
 
 void client::record(std::vector<std::string> command) {
   if (command.size() < 2) {
@@ -171,8 +189,6 @@ void client::record(std::vector<std::string> command) {
   local_base[command[1]] = path;
 }
 
-
-
 void client::time_record() {
   while (!microphone.get_start_record()) {}  
   std::cout<<std::fixed<<std::setprecision(1);
@@ -180,36 +196,6 @@ void client::time_record() {
     std::cout<<"\r"<<"recording time: "<<microphone.stream_time()<<std::flush;
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
     
-  }
-}
-
-
-
-class server
-{
-  public:
-  void expand_base(std::string path);
-  void show_base();
-
-  private:
-
-  std::map<std::string, std::string> base;
-};
-
-
-
-void server::expand_base(std::string path) {
-  for (const auto & entry : std::filesystem::directory_iterator(path)) {
-    if (entry.path().extension() == ".raw") {
-      base[entry.path().stem()] = entry.path();
-    }
-    
-  }  
-}
-
-void server::show_base() {
-  for (auto it = base.begin(); it!=base.end(); it++) {
-    std::cout<<"data: "<< it->first <<"\t"<< "path: " << it->second << std::endl;
   }
 }
 
