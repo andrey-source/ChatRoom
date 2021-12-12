@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-project(audio)
+set(CMAKE_CXX_EXTENSIONS OFF)
+project(audio LANGUAGES CXX)
 # set(RTAUDIO_API_ALSA 1)
 set(RTAUDIO_API_PULSE 1)
 
@@ -15,6 +16,7 @@ target_link_libraries(audio PUBLIC rtaudio)
 
 add_executable(main main.cpp)
 target_link_libraries(main audio)
+
 
 # add_executable(audio audio.cpp)
 # target_link_libraries(audio PUBLIC rtaudio)

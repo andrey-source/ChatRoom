@@ -92,7 +92,7 @@ bool record::input(std::string puth) {
 
 
   play::play(size_t device_, size_t n_channels_, unsigned int buffer_size_, size_t first_channel_, size_t sample_rate_) {
-    status = true;
+    status = false;
     current_butch = 0;
     set_config(device_, n_channels_, buffer_size_, first_channel_, sample_rate_);
   }
@@ -128,7 +128,6 @@ bool record::input(std::string puth) {
   void play::off() {status = false;}
 
   bool play::play_file(){
-    status = true;
     file.seekg(current_butch * sizeof(MY_TYPE) * parameters.nChannels * buffer_size, std::ios_base::beg);
     try {
       dac.openStream(&parameters, nullptr,  FORMAT,
@@ -139,8 +138,8 @@ bool record::input(std::string puth) {
       e.printMessage();
       exit( 0 );
     }
+    status = true;
     while (status && dac.isStreamRunning()) {
-      // stream_time = dac.getStreamTime();
     }
     if ( dac.isStreamOpen() ) dac.closeStream();
     file.close();

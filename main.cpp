@@ -7,7 +7,6 @@
 #include <map>
 
 
-
 class client
 {
 public:
@@ -140,24 +139,41 @@ void client::play(std::vector<std::string> command) {
     } else {
       speaker.set_file(local_base[command[1]]);
     }
+  std::cout << "Press enter to interrupt playback" << std::endl;  
+
+
   std::thread th([&](){
     speaker.play_file();
   });
-  std::thread th1([&](){
-    time_play();
+
+
+  bool interrupt = false;
+  std::thread th1([this, &interrupt](){
+    while (!speaker.get_status()) {}  
+    std::cout<<std::fixed<<std::setprecision(1);
+    while (speaker.get_status()) { 
+      std::cout<<"\r"<<"play_time: "<<speaker.current_time()<<"/"<<speaker.get_duration()<<std::flush;
+      std::this_thread::sleep_for(std::chrono::milliseconds(1)); 
+    }
+    std::cout<<std::endl;
+    if (!interrupt) {
+      std::cout<<"Press enter to continue..."<<std::flush;
+    }
   });
+
+  std::jthread th2([this, &interrupt] {
+    getchar();
+    interrupt = true;
+    speaker.off();
+  });
+
+
   th.join();
   th1.join();
-}
-
-void client::time_play() {
- 
-  std::cout<<std::fixed<<std::setprecision(1);
-  while (speaker.get_status()) { 
-    std::cout<<"\r"<<"play_time: "<<speaker.current_time()<<"/"<<speaker.get_duration()<<std::flush;
-    // std::cout<<"play" <<std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    
+  if(interrupt) {
+    th2.join();
+  } else {
+    th2.request_stop();
   }
 }
 
@@ -175,7 +191,7 @@ void client::record(std::vector<std::string> command) {
   } else {
     path = "../voice_data/" + command[1] + ".raw";
   }
-  std::cout << "to stop recording press enter" << std::endl;
+  std::cout << "Press enter to stop record" << std::endl;
   std::thread th([&](){
     microphone.input(path);
   });
@@ -195,7 +211,6 @@ void client::time_record() {
   while (microphone.get_status()) { 
     std::cout<<"\r"<<"recording time: "<<microphone.stream_time()<<std::flush;
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    
   }
 }
 
@@ -206,9 +221,6 @@ int main()
     client cl(0, 1,1024, 0, 44100);
     cl.run();
 
-    // std::cout<<"test"<<"\b";
-    // std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    // std::cout<<"\b" << "test2";
 
   return 0;
 }
