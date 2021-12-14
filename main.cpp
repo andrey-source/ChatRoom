@@ -7,11 +7,17 @@
 #include <map>
 
 
+
+#define CACHE "../voice_data/"
+
+
 class client
 {
 public:
-  client(size_t device, size_t n_channels, size_t buffer_size, 
+  client(std::string directory, size_t device, size_t n_channels, size_t buffer_size, 
         size_t first_channel, size_t sample_rate);
+
+  client() : cache_directory(CACHE){};     
   void run();
 private:
   bool status;
@@ -21,20 +27,21 @@ private:
   void off() {status =false;}
   void play(std::vector<std::string> command);
   void record(std::vector<std::string> command);
-  void time_record();
-  void time_play();
 
+  std::string cache_directory;
   std::map<std::string, std::string> local_base;
   audio::play speaker;
   audio::record microphone;
-
 };
 
-client::client(size_t device, size_t n_channels, size_t buffer_size, 
+
+
+client::client(std::string directory, size_t device, size_t n_channels, size_t buffer_size, 
         size_t first_channel, size_t sample_rate) 
         
   : speaker(device, n_channels, buffer_size, first_channel, sample_rate),
     microphone(device, n_channels, buffer_size, first_channel, sample_rate),
+    cache_directory(directory),
     status(true)
 {};
 
@@ -98,7 +105,7 @@ void client::help() {
 
 void client::show_base() {
   for (auto it = local_base.begin(); it!=local_base.end(); it++) {
-    std::cout<<"data: "<< it->first <<"\t"<< "path: " << it->second << std::endl;
+    std::cout<<"key: "<< it->first <<"\t"<< "path: " << it->second << std::endl;
   }
 }
 
@@ -140,12 +147,9 @@ void client::play(std::vector<std::string> command) {
       speaker.set_file(local_base[command[1]]);
     }
   std::cout << "Press enter to interrupt playback" << std::endl;  
-
-
   std::thread th([&](){
     speaker.play_file();
   });
-
 
   bool interrupt = false;
   std::thread th1([this, &interrupt](){
@@ -160,14 +164,11 @@ void client::play(std::vector<std::string> command) {
       std::cout<<"Press enter to continue..."<<std::flush;
     }
   });
-
   std::jthread th2([this, &interrupt] {
     getchar();
     interrupt = true;
     speaker.off();
   });
-
-
   th.join();
   th1.join();
   if(interrupt) {
@@ -176,9 +177,6 @@ void client::play(std::vector<std::string> command) {
     th2.request_stop();
   }
 }
-
-
-
 
 void client::record(std::vector<std::string> command) {
   if (command.size() < 2) {
@@ -189,14 +187,20 @@ void client::record(std::vector<std::string> command) {
   if (command.size() == 3) {
     path = command[2] + "/" + command[1] + ".raw";
   } else {
-    path = "../voice_data/" + command[1] + ".raw";
+    path = cache_directory + command[1] + ".raw";
   }
   std::cout << "Press enter to stop record" << std::endl;
   std::thread th([&](){
     microphone.input(path);
   });
-  std::thread th1([&]() {
-    time_record();
+  std::thread th1([this]() {
+    while (!microphone.get_start_record()) {}  
+    std::cout<<std::fixed<<std::setprecision(1);
+    while (microphone.get_status()) { 
+      std::cout<<"\r"<<"recording time: "<<microphone.stream_time()<<std::flush;
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
   });
   getchar();
   microphone.off();
@@ -205,20 +209,11 @@ void client::record(std::vector<std::string> command) {
   local_base[command[1]] = path;
 }
 
-void client::time_record() {
-  while (!microphone.get_start_record()) {}  
-  std::cout<<std::fixed<<std::setprecision(1);
-  while (microphone.get_status()) { 
-    std::cout<<"\r"<<"recording time: "<<microphone.stream_time()<<std::flush;
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
-}
-
-
 
 int main()
 {
-    client cl(0, 1,1024, 0, 44100);
+    // client cl("../voice_data/", 0, 1,1024, 0, 44100);
+    client cl;
     cl.run();
 
 
