@@ -13,8 +13,9 @@ add_link_options(-pthread)
 add_subdirectory(rtaudio)
 add_library(audio_lib STATIC audio/audio.cpp)
 target_include_directories(audio_lib PUBLIC audio)
-
 target_link_libraries(audio_lib PUBLIC rtaudio)
+
+
 
 add_executable(main main.cpp)
 target_link_libraries(main audio_lib)

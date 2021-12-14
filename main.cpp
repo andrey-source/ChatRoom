@@ -5,6 +5,7 @@
 #include "audio.h"
 #include <filesystem>
 #include <map>
+#include <cstdio>
 
 
 
@@ -27,6 +28,7 @@ private:
   void off() {status =false;}
   void play(std::vector<std::string> command);
   void record(std::vector<std::string> command);
+  void remove(std::vector<std::string> command);
 
   std::string cache_directory;
   std::map<std::string, std::string> local_base;
@@ -87,17 +89,26 @@ void client::run() {
       record(command);
       continue;
     }
+    if (command[0] == "remove") {
+      remove(command);
+      continue;
+    }
     std::cout << "Incorrect command" << std::endl;
   }
 }
 
+
+
 void client::help() {
+
   std::cout << std::endl << std::endl;
+  std::cout<<"action:\t\t\t\t\t\t command:"<<std::endl<<std::endl;
   std::cout<<"expand local directory:\t\t\t\t expand your_directory" << std::endl;
   std::cout<<"record a voice message:\t\t\t\t record audio_message" << std::endl;
   std::cout<<"listen to the message:\t\t\t\t play audio_message" << std::endl;
   std::cout<<"send a message to the server:\t\t\t push audio_message" << std::endl;
   std::cout<<"request a list of messages from the server:\t request" << std::endl;
+  std::cout<<"remove file:\t\t\t\t\t remove your_file" << std::endl;
   std::cout<<"show messages in directory:\t\t\t show" << std::endl;
   std::cout<<"close application:\t\t\t\t close" << std::endl;
   std::cout<<std::endl;
@@ -121,9 +132,20 @@ void client::expand_base(std::vector<std::string> command) {
   for (const auto & entry : std::filesystem::directory_iterator(command[1])) {
     if (entry.path().extension() == ".raw") {
       local_base[entry.path().stem()] = entry.path();
-    }
-    
+    } 
   }  
+}
+
+void client::remove(std::vector<std::string> command) {
+  if (command.size() < 2) {
+    std::cout<<"Incorrect input" << std::endl;
+  }
+  if ( std::filesystem::remove(local_base[command[1]])) {
+    std::cout << "file with key " << command[1] << " deleted" << std::endl;
+    local_base.erase(command[1]);
+  } else {
+    std::cout << "file delection error" << std::endl;
+  }
 }
 
 void client::play(std::vector<std::string> command) {
@@ -156,7 +178,7 @@ void client::play(std::vector<std::string> command) {
     while (!speaker.get_status()) {}  
     std::cout<<std::fixed<<std::setprecision(1);
     while (speaker.get_status()) { 
-      std::cout<<"\r"<<"play_time: "<<speaker.current_time()<<"/"<<speaker.get_duration()<<std::flush;
+      std::cout<<"\r"<<"play time: "<<speaker.current_time()<<"/"<<speaker.get_duration()<<std::flush;
       std::this_thread::sleep_for(std::chrono::milliseconds(1)); 
     }
     std::cout<<std::endl;
@@ -185,9 +207,25 @@ void client::record(std::vector<std::string> command) {
   }
   std::string path;
   if (command.size() == 3) {
-    path = command[2] + "/" + command[1] + ".raw";
+    if (!std::filesystem::exists(command[2])) {
+      std::filesystem::create_directories(command[2]);
+    } else {
+      for (const auto & entry : std::filesystem::directory_iterator(command[2])) {
+        if (entry.path().extension() == ".raw" && entry.path().stem() == command[1]) {
+          std::cout<<"Such file already exists" << std::endl;
+          return;
+        }
+        path = command[2] + "/" + command[1] + ".raw";
+      }
+    }
   } else {
+    for (const auto & entry : std::filesystem::directory_iterator(cache_directory)) {
+      if (entry.path().extension() == ".raw" && entry.path().stem() == command[1]) {
+        std::cout<<"Such file already exists" << std::endl;
+        return;
+      }
     path = cache_directory + command[1] + ".raw";
+    }
   }
   std::cout << "Press enter to stop record" << std::endl;
   std::thread th([&](){
@@ -200,7 +238,6 @@ void client::record(std::vector<std::string> command) {
       std::cout<<"\r"<<"recording time: "<<microphone.stream_time()<<std::flush;
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-
   });
   getchar();
   microphone.off();
