@@ -2,9 +2,9 @@
 #include "audio.h"
 
 
-namespace audio
-{
-  record::record(size_t device, size_t n_channels, unsigned int buffer_size, size_t first_channel, size_t Sample_rate) {
+namespace audio {
+  record::record(size_t device, size_t n_channels, unsigned int buffer_size,
+                                   size_t first_channel, size_t Sample_rate) {
     start_flag = false;
     status = false;
     set_config(device, n_channels, buffer_size, first_channel, Sample_rate);
@@ -43,7 +43,6 @@ namespace audio
   bool record::input(std::string puth) {
     std::ofstream file(puth, std::ios::binary);
     if ( adc.getDeviceCount() < 1 ) {
-      std::cout << "\nNo audio devices found!\n";
       exit( 0 );
     }
     try {
@@ -138,7 +137,7 @@ namespace audio
   int play::play_butch(void *OutputBuffer,  void */*InputBuffer*/, unsigned int nBufferFrames,
                     double streamTime, RtAudioStreamStatus /*status1*/, void */*userData*/) {
       file.read((char*)OutputBuffer, sizeof(MY_TYPE) * parameters.nChannels * nBufferFrames);
-      if(file.eof()){
+      if(file.eof()) {
         return 1;
       }
       current_butch++;
