@@ -1,6 +1,8 @@
 
 cmake_minimum_required(VERSION 3.8)
-set (CMAKE_CXX_STANDARD 14)
+#set (CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(boost)
 
@@ -17,3 +19,4 @@ target_link_libraries(async.http.client  ${Boost_LIBRARIES})
 #  Async HTTP Server
 add_executable(async.http.server async.http.server.h async.http.server.cpp connection.h connection.cpp)
 target_link_libraries(async.http.server  ${Boost_LIBRARIES})
+

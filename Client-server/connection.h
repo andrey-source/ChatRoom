@@ -15,6 +15,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <map>
+#include <filesystem>
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
@@ -54,6 +56,7 @@ namespace server3 {
                               std::size_t bytes_transferred);
 
             void do_close();
+            void show_base(std::stringstream& key_path);
 
         private:
             /// The handler used to process the incoming request.
@@ -63,6 +66,9 @@ namespace server3 {
             beast::multi_buffer buffer_File;
             beast::flat_buffer buffer_;
             std::string flag = "chat";
+
+            std::map<std::string, std::string> local_base;
+            
             http::request<http::string_body> request_;
             http::request<http::file_body> request_file;
             http::response<http::string_body> res;
