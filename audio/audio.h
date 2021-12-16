@@ -3,7 +3,7 @@
 
 #define DEVICE 0
 #define SAMPLE_RATE 44100
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 1024
 #define N_CNAHHELS 2
 #define FIRST_CHANNEL 0
 #define FORMAT RTAUDIO_SINT16

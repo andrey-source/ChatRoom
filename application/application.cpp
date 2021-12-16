@@ -4,7 +4,8 @@
 #include <thread>
 #include <filesystem>
 #include <cstdio>
-#include "client.h"
+#include "application.h"
+#include "async.http.client.h"  //LIZA
 
 
 
@@ -18,9 +19,9 @@ client::client(std::string directory, size_t device, size_t n_channels, size_t b
 {};
 
 client::client(std::string directory) 
-  : cache_directory(directory){};
+  : cache_directory(directory), server(SERVER), port(PORT){};
 
-client::client() : cache_directory(CACHE){};  
+client::client() : cache_directory(CACHE), server(SERVER), port(PORT){};  
 
 void client::run() {
   std::cout<<"client started" <<std::endl;
@@ -42,7 +43,7 @@ void client::run() {
       help();
       continue;
     }
-    if (command[0] == "show") {
+    if (command[0] == "ls") {
       show_base();
       continue;
     }
@@ -66,6 +67,18 @@ void client::run() {
       remove(command);
       continue;
     }
+    if (command[0] == "push") { //LIZA
+      push(command);
+      continue;
+    }
+    if (command[0] == "download") {  //LIZA
+      download(command);
+      continue;
+    }
+    if (command[0] == "show") {  // LIZA
+      show_server(command);
+      continue;
+    }
     std::cout << "Incorrect command" << std::endl;
   }
 }
@@ -79,12 +92,12 @@ void client::help() {
   std::cout<<"send a message to the server:\t\t\t push audio_message" << std::endl;
   std::cout<<"request a list of messages from the server:\t request" << std::endl;
   std::cout<<"remove file:\t\t\t\t\t remove your_file" << std::endl;
-  std::cout<<"show messages in directory:\t\t\t show" << std::endl;
+  std::cout<<"show messages in directory:\t\t\t ls" << std::endl;
   std::cout<<"close application:\t\t\t\t close" << std::endl;
   std::cout<<std::endl;
 }
 
-void client::show_base() {
+void client::ls() {
   for (auto it = local_base.begin(); it!=local_base.end(); it++) {
     std::cout<<"key: "<< it->first <<"\t"<< "path: " << it->second << std::endl;
   }
@@ -214,4 +227,35 @@ void client::record(std::vector<std::string> command) {
   th.join();
   th1.join();
   local_base[command[1]] = path;
+}
+
+
+
+
+
+
+// LIZA ////////////////////////////////////////////////////////////////////
+void client::push(std::vector<std::string> command) {
+  if (command.size() < 2) {
+    std::cout<<"Incorrect input" << std::endl;
+    return;
+  }
+    if (!local_base.count(command[1])) {
+    std::cout<<"There in no file with such a key. Try expand your_directory." <<std::endl;
+    return;
+  }
+  std::string path = cache_directory + command[1] + ".raw";
+  std::make_shared<Client>(io_context)->push(server,port,path);
+} 
+
+
+// LIZA ////////////////////////////////////////////////////////////////////
+void client::show_server(std::vector<std::string> command) {
+  std::string files std::make_shared<Client>(io_context)->push(server,port,path);
+  //here's the parsing of the line and the output
+}
+
+// LIZA ////////////////////////////////////////////////////////////////////////
+void client::download(std::vector<std::string> command) {
+  std::make_shared<Client>(io_context)->download(server,port,key);
 }

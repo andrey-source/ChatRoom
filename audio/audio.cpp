@@ -78,7 +78,7 @@ namespace audio {
     set_config(device_, n_channels_, buffer_size_, first_channel_, sample_rate_);
   }
 
-  play::play() {
+  play::play(){
     status = false;
     current_butch = 0;
     set_config(DEVICE, N_CNAHHELS, BUFFER_SIZE, FIRST_CHANNEL, SAMPLE_RATE);
