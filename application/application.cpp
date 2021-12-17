@@ -162,6 +162,8 @@ void client::handler_play(std::vector<std::string> command) {
 
 
 void client::play(std::string path, double time) {
+  local_base.clear();
+  open(cache_directory);
   audio::play speaker;
   speaker.set_file(path);
   speaker.set_time(time);
@@ -170,7 +172,7 @@ void client::play(std::string path, double time) {
     speaker.set_config(0, 2, 1024, 0, 48000);
   }
   if (extension == ".wav") {
-    speaker.set_config(0, 1, 1024, 0, 44100);
+    speaker.set_config(0, 2, 1024, 0, 44100);
   }
   if (extension == ".cd") {
     speaker.set_config(0, 2, 1024, 0, 44100);
@@ -245,7 +247,7 @@ void client::record(std::string path) {
     microphone.set_config(0, 2, 1024, 0, 48000);
   }
   if (extension == ".wav") {
-    microphone.set_config(0, 1, 1024, 0, 44100);
+    microphone.set_config(0, 2, 1024, 0, 44100);
   }
   if (extension == ".cd") {
     microphone.set_config(0, 2, 1024, 0, 44100);
