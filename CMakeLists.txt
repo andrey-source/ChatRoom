@@ -45,17 +45,22 @@ target_link_libraries(audio_lib PUBLIC rtaudio)
 
 
 ###### LIZA
-add_library(net_lib STATIC client/async.http.client.cpp)
-target_include_directories(net_lib PUBLIC client)
+add_library(client_lib STATIC client/async.http.client.cpp)
+target_include_directories(client_lib PUBLIC client)
+
+add_library(server_lib STATIC server/async.http.server.cpp)
+target_include_directories(server_lib PUBLIC server)
 #######
 
 add_executable(async.http.client  async.http.client.cpp)
 target_link_libraries(async.http.client  ${Boost_LIBRARIES})
 
+add_executable(async.http.server  async.http.server.cpp)
+target_link_libraries(async.http.server  ${Boost_LIBRARIES})
 
 
 add_executable(main main.cpp application/application.cpp )
-target_link_libraries(main audio_lib net_lib)
+target_link_libraries(main audio_lib client_lib server_lib)
 target_include_directories(main PUBLIC application)
 
 
