@@ -6,6 +6,13 @@
 #define BUFFER_SIZE 4096
 #define N_CNAHHELS 2
 #define FIRST_CHANNEL 0
+// RTAUDIO_SINT8: 8-bit signed integer.
+// RTAUDIO_SINT16: 16-bit signed integer.
+// RTAUDIO_SINT24: 24-bit signed integer.
+// RTAUDIO_SINT32: 32-bit signed integer.
+// RTAUDIO_FLOAT32: Normalized between plus/minus 1.0.
+// RTAUDIO_FLOAT64: Normalized between plus/minus 1.0.
+
 #define FORMAT RTAUDIO_SINT16
 typedef signed short MY_TYPE;
 

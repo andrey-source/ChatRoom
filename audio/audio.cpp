@@ -100,8 +100,7 @@ namespace audio {
   void play::set_file(std::string puth) {
     file.open(puth, std::ios::binary | std::ios::ate);
     current_butch = 0;
-    size_t n_bytes = file.tellg();
-    duration = (double)n_bytes / parameters.nChannels / sizeof(MY_TYPE) / sample_rate;
+
   }
 
   void play::set_time(double percentage) {
@@ -115,6 +114,8 @@ namespace audio {
   void play::off() {status = false;}
 
   bool play::play_file(){
+    size_t n_bytes = file.tellg();
+    duration = (double)n_bytes / parameters.nChannels / sizeof(MY_TYPE) / sample_rate;
     file.seekg(current_butch * sizeof(MY_TYPE) * parameters.nChannels * buffer_size, std::ios_base::beg);
     try {
       dac.openStream(&parameters, nullptr,  FORMAT,

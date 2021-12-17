@@ -22,14 +22,25 @@ private:
   void show_base();
   void expand_base(std::vector<std::string> command);
   void off() {status =false;}
-  void play(std::vector<std::string> command);
-  void record(std::vector<std::string> command);
-  void remove(std::vector<std::string> command);
-  void push(std::string server, std::string port, std::string path);
+  void play(std::string path, double time);
+  void record(std::string path);
+
+  void handler_play(std::vector<std::string> command);
+  void handler_record(std::vector<std::string> command);
+
+  
+  bool remove(std::string key);
+
+  // void push(std::string server, std::string port, std::string path);
+  void open(std::string path);
+
+
+
+  void update(std::string path, std::string extension);
 
   std::string cache_directory;
   std::map<std::string, std::string> local_base;
-  audio::play speaker;
-  audio::record microphone;
+  // audio::play speaker;
+  // audio::record microphone;
   
 };

@@ -17,22 +17,22 @@ option(LEAK_SANITIZER "Add leak sanitizer")
 
 
 
-if(ADDRESS_SANITIZER)
-    add_compile_options(-fsanitize=address)
-    add_link_options(-fsanitize=address)
-endif()
-if(UNDEFINED_SANITIZER)
-    add_compile_options(-fsanitize=undefined)
-    add_link_options(-fsanitize=undefined)
-endif()
-if(THREAD_SANITIZER)
-    add_compile_options(-fsanitize=thread)
-    add_link_options(-fsanitize=thread)
-endif()
-if(LEAK_SANITIZER)
-    add_compile_options(-fsanitize=leak)
-    add_link_options(-fsanitize=leak)
-endif()
+# if(ADDRESS_SANITIZER)
+#     add_compile_options(-fsanitize=address)
+#     add_link_options(-fsanitize=address)
+# endif()
+# if(UNDEFINED_SANITIZER)
+#     add_compile_options(-fsanitize=undefined)
+#     add_link_options(-fsanitize=undefined)
+# endif()
+# if(THREAD_SANITIZER)
+#     add_compile_options(-fsanitize=thread)
+#     add_link_options(-fsanitize=thread)
+# endif()
+# if(LEAK_SANITIZER)
+#     add_compile_options(-fsanitize=leak)
+#     add_link_options(-fsanitize=leak)
+# endif()
 
 
 
@@ -43,9 +43,9 @@ target_link_libraries(audio_lib PUBLIC rtaudio)
 
 
 
-add_executable(main main.cpp client/client.cpp)
+add_executable(main main.cpp application/application.cpp)
 target_link_libraries(main audio_lib)
-target_include_directories(main PUBLIC client)
+target_include_directories(main PUBLIC application)
 
 
 # add_executable(audio audio.cpp)
