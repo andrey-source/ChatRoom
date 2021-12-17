@@ -85,13 +85,6 @@ void client::run() {
 }
 
 
-
-
-
-
-
-
-
 void client::help() {
   std::cout << std::endl << std::endl;
   std::cout<<"action:\t\t\t\t\t\t command:"<<std::endl<<std::endl;
@@ -127,7 +120,7 @@ void client::open(std::string path) {
     return;
   }
   local_base.clear();
-  update(path, ".mp4");
+  update(path, ".wav");
   update(path, ".mp3");
   update(path, ".cd"); 
 }
@@ -176,11 +169,11 @@ void client::play(std::string path, double time) {
   if (extension == ".mp3") {
     speaker.set_config(0, 2, 1024, 0, 48000);
   }
-  if (extension == ".mp4") {
-    speaker.set_config(0, 2, 1024, 0, 96000);
+  if (extension == ".wav") {
+    speaker.set_config(0, 1, 1024, 0, 44100);
   }
   if (extension == ".cd") {
-    speaker.set_config(0, 1, 1024, 0, 44100);
+    speaker.set_config(0, 2, 1024, 0, 44100);
   }
   std::cout << "Press enter to interrupt playback" << std::endl;  
   std::thread th([&](){
@@ -217,6 +210,8 @@ void client::play(std::string path, double time) {
 
 
 void client::handler_record(std::vector<std::string> command) {
+  local_base.clear();
+  open(cache_directory);
   if (command.size() < 2 || command.size() > 3) {
     std::cout<<"Incorrect command" << std::endl;
     return;
@@ -230,16 +225,15 @@ void client::handler_record(std::vector<std::string> command) {
     if (command[2] == "cd") {
     } else if (command[2] == "mp3") {
       extension = ".mp3";
-    } else if (command[2] == "mp4") {
-      extension = ".mp4";
+    } else if (command[2] == "wav") {
+      extension = ".wav";
     } else {
       std::cout<<"Incorrect extension" << std::endl;
       return;
     }
   }
   std::string path = cache_directory + command[1] + extension;
-  local_base.clear();
-  open(cache_directory);
+
   record(path);
 }
 
@@ -250,11 +244,11 @@ void client::record(std::string path) {
   if (extension == ".mp3") {
     microphone.set_config(0, 2, 1024, 0, 48000);
   }
-  if (extension == ".mp4") {
-    microphone.set_config(0, 2, 1024, 0, 96000);
+  if (extension == ".wav") {
+    microphone.set_config(0, 1, 1024, 0, 44100);
   }
   if (extension == ".cd") {
-    microphone.set_config(0, 1, 1024, 0, 44100);
+    microphone.set_config(0, 2, 1024, 0, 44100);
   }
   std::cout << "Press enter to stop record" << std::endl;
   std::thread th([&](){
