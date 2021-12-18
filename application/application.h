@@ -11,32 +11,39 @@
 class client
 {
 public:
-  client(std::string directory, size_t device, size_t n_channels, size_t buffer_size, 
-        size_t first_channel, size_t sample_rate);
-  client(std::string directory);
   client();   
+  client(std::string server, std::string port);
+  
   void run();
 private:
   bool status;
   void help();
   void ls();
-  void expand_base(std::vector<std::string> command);
+  void open(std::string path);
   void off() {status =false;}
-  void play(std::vector<std::string> command);
-  void record(std::vector<std::string> command);
-  void remove(std::vector<std::string> command);
+  void play(std::string path, double time);
+  void record(std::string path);
+  void handler_play(std::vector<std::string> command);
+  void handler_record(std::vector<std::string> command);
 
+  
+  bool remove(std::string key);
 
   void push(std::vector<std::string> command);  //LIZA
   void download(std::vector<std::string> command); // LIZA
   void show_server(std::vector<std::string> command); // LIZA
 
+
+
+
+  void update(std::string path, std::string extension);
+
   std::string cache_directory;
   std::map<std::string, std::string> local_base;
-  audio::play speaker;
-  audio::record microphone;
+
 
   std::string server; // LIZA
   std::string port; // LIZA
+
   
 };
