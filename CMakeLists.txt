@@ -34,6 +34,8 @@ option(LEAK_SANITIZER "Add leak sanitizer")
 #     add_link_options(-fsanitize=leak)
 # endif()
 
+# find_package(Boost)
+# include_directories(${Boost_INCLUDE_DIRS})
 
 
 add_subdirectory(rtaudio)
@@ -42,37 +44,11 @@ target_include_directories(audio_lib PUBLIC audio)
 target_link_libraries(audio_lib PUBLIC rtaudio)
 
 
+###### LIZA
+# add_library(net_lib STATIC client/async.http.client.cpp)
+# target_include_directories(net_lib PUBLIC client)
 
-add_executable(main main.cpp application/application.cpp)
+
+add_executable(main main.cpp application/application.cpp )
 target_link_libraries(main audio_lib)
 target_include_directories(main PUBLIC application)
-
-
-# add_executable(audio audio.cpp)
-# target_link_libraries(audio PUBLIC rtaudio)
-
-
-
-# find_package(Boost)
-# include_directories(${Boost_INCLUDE_DIRS})
-
-
-# #client
-# add_executable(client  client.cpp)
-# target_link_libraries(client  ${Boost_LIBRARIES})
-
-# #server
-# add_executable(server server.h server.cpp connection.h connection.cpp)
-# target_link_libraries(server ${Boost_LIBRARIES})
-
-# #sync client 
-# add_executable(sync_client  sync_client.cpp)
-# target_link_libraries(sync_client ${Boost_LIBRARIES})
-
-# #sync server
-# add_executable(sync_server  sync_server.cpp)
-# target_link_libraries(sync_server ${Boost_LIBRARIES})
-
-# #sync server
-# add_executable(my_server  my_server.cpp)
-# target_link_libraries(my_server ${Boost_LIBRARIES})

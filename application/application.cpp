@@ -169,8 +169,6 @@ void client::handler_play(std::vector<std::string> command) {
 }
 
 
-
-
 void client::play(std::string path, double time) {
   open(cache_directory);
   audio::play speaker;
