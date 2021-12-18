@@ -39,8 +39,8 @@ void client::run() {
       help();
       continue;
     }
-    if (command[0] == "show") {
-      show_base();
+    if (command[0] == "ls") {
+      ls();
       continue;
     }
     if (command[0] == "open") {
@@ -75,6 +75,18 @@ void client::run() {
       std::cout << "file delection error" << std::endl;
       continue;
     }
+    // if (command[0] == "push") { //LIZA
+    //   push(command);
+    //   continue;
+    // }
+    // if (command[0] == "download") {  //LIZA
+    //   download(command);
+    //   continue;
+    // }
+    // if (command[0] == "show") {  // LIZA
+    //   show_server(command);
+    //   continue;
+    // }
     std::cout << "Incorrect command" << std::endl;
   }
 }
@@ -95,7 +107,7 @@ void client::help() {
 }
 
 
-void client::show_base() {
+void client::ls() {
   open(cache_directory);
   for (auto it = local_base.begin(); it!=local_base.end(); it++) {
     std::cout<<"key: "<< it->first <<"\t"<< "path: " << it->second << std::endl;
