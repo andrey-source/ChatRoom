@@ -111,7 +111,7 @@ namespace server3 {
         void Connection::do_read()
         {
             std::filesystem::path path{server_path}; //creates TestingFolder object on C:
-            path /=   "record"+ std::to_string(number_of_files(server_path))+".txt"; //put something into there
+            path /=   "record"+ std::to_string(number_of_files(server_path))+".wav"; //put something into there
             std::filesystem::create_directories(path.parent_path()); //add directories based on the object path (without this line it will not work)
 
             std::ofstream ofs(path);
@@ -179,7 +179,7 @@ namespace server3 {
 
             for (const auto & entry : std::filesystem::directory_iterator(server_path)) 
             {
-                if (entry.path().extension() == ".txt") 
+                if (entry.path().extension() == ".wav") 
                 {
                 local_base[entry.path().stem()] = entry.path();
                 key_path << " key :"<< entry.path().stem()<<" path: "<< entry.path()<<"\r\n";
