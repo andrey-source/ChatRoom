@@ -5,23 +5,19 @@
 #include <filesystem>
 #include <cstdio>
 #include "application.h"
-#include "async.http.client.h"  //LIZA
 
 
 
-client::client(std::string directory, size_t device, size_t n_channels, size_t buffer_size, 
-        size_t first_channel, size_t sample_rate) 
-        
-  : speaker(device, n_channels, buffer_size, first_channel, sample_rate),
-    microphone(device, n_channels, buffer_size, first_channel, sample_rate),
-    cache_directory(directory),
-    status(true)
-{};
 
-client::client(std::string directory) 
-  : cache_directory(directory), server(SERVER), port(PORT){};
+client::client()
+  : status(true), server(SERVER), port(PORT), cache_directory(CACHE){}
 
-client::client() : cache_directory(CACHE), server(SERVER), port(PORT){};  
+client::client(std::string server, std::string port)
+  : status(true), server(server), port(port), cache_directory(CACHE){}
+
+
+
+
 
 void client::run() {
   std::cout<<"client started" <<std::endl;
@@ -44,11 +40,15 @@ void client::run() {
       continue;
     }
     if (command[0] == "ls") {
-      show_base();
+      ls();
       continue;
     }
-    if (command[0] == "expand") {
-      expand_base(command);
+    if (command[0] == "open") {
+      if (command.size() < 2) {
+        std::cout << "Incorrect input" << std::endl;
+        continue;
+      }
+      open(command[1]);
       continue;
     }
     if (command[0] == "close") {
@@ -56,108 +56,141 @@ void client::run() {
       continue;
     }
     if (command[0] == "play") {
-      play(command);
+      handler_play(command);
       continue;
     }
     if (command[0] == "record") {
-      record(command);
+      handler_record(command);
       continue;
     }
     if (command[0] == "remove") {
-      remove(command);
+        if (command.size() < 2) {
+        std::cout<<"Incorrect input" << std::endl;
+        continue;
+        }
+      if (remove(command[1])) {
+        std::cout << "file with key " << command[1] << " deleted" << std::endl;
+        continue;
+      };
+      std::cout << "file delection error" << std::endl;
       continue;
     }
-    if (command[0] == "push") { //LIZA
-      push(command);
-      continue;
-    }
-    if (command[0] == "download") {  //LIZA
-      download(command);
-      continue;
-    }
-    if (command[0] == "show") {  // LIZA
-      show_server(command);
-      continue;
-    }
+    // if (command[0] == "push") { //LIZA
+    //   push(command);
+    //   continue;
+    // }
+    // if (command[0] == "download") {  //LIZA
+    //   download(command);
+    //   continue;
+    // }
+    // if (command[0] == "show") {  // LIZA
+    //   show_server(command);
+    //   continue;
+    // }
     std::cout << "Incorrect command" << std::endl;
   }
 }
 
+
 void client::help() {
   std::cout << std::endl << std::endl;
   std::cout<<"action:\t\t\t\t\t\t command:"<<std::endl<<std::endl;
-  std::cout<<"expand local directory:\t\t\t\t expand your_directory" << std::endl;
+  std::cout<<"open directory:\t\t\t\t\t open your_directory" << std::endl;
   std::cout<<"record a voice message:\t\t\t\t record audio_message" << std::endl;
   std::cout<<"listen to the message:\t\t\t\t play audio_message" << std::endl;
   std::cout<<"send a message to the server:\t\t\t push audio_message" << std::endl;
   std::cout<<"request a list of messages from the server:\t request" << std::endl;
   std::cout<<"remove file:\t\t\t\t\t remove your_file" << std::endl;
-  std::cout<<"show messages in directory:\t\t\t ls" << std::endl;
+  std::cout<<"show audio files in current directory:\t\t ls" << std::endl;
   std::cout<<"close application:\t\t\t\t close" << std::endl;
   std::cout<<std::endl;
 }
 
+
 void client::ls() {
+  open(cache_directory);
   for (auto it = local_base.begin(); it!=local_base.end(); it++) {
     std::cout<<"key: "<< it->first <<"\t"<< "path: " << it->second << std::endl;
   }
 }
 
-void client::expand_base(std::vector<std::string> command) {
-  if (command.size() < 2) {
-    std::cout<<"Incorrect input" << std::endl;
-    return;
-  }
-  if (!std::filesystem::exists(command[1])) {
-    std::cout << "No such directory" << std::endl;
-    return;
-  }
-  for (const auto & entry : std::filesystem::directory_iterator(command[1])) {
-    if (entry.path().extension() == ".raw") {
+void client::update(std::string path, std::string extension) {
+  for (const auto & entry : std::filesystem::directory_iterator(path)) {
+    if (entry.path().extension() == extension) {
       local_base[entry.path().stem()] = entry.path();
     } 
   }  
 }
 
-void client::remove(std::vector<std::string> command) {
-  if (command.size() < 2) {
-    std::cout<<"Incorrect input" << std::endl;
+void client::open(std::string path) {
+  
+  if (!std::filesystem::exists(path)) {
+    std::filesystem::create_directories(path);
+    return;
   }
-  if ( std::filesystem::remove(local_base[command[1]])) {
-    std::cout << "file with key " << command[1] << " deleted" << std::endl;
-    local_base.erase(command[1]);
-  } else {
-    std::cout << "file delection error" << std::endl;
-  }
+  cache_directory = path;
+  local_base.clear();
+  update(path, ".wav");
+  update(path, ".mp3");
+  update(path, ".cd"); 
 }
 
-void client::play(std::vector<std::string> command) {
-  if (command.size() < 2) {
+bool client::remove(std::string key) {
+  if (std::filesystem::remove(local_base[key])) {
+    local_base.erase(key);
+    return true;
+  }
+  return false;
+}
+
+void client::handler_play(std::vector<std::string> command) {
+  if (command.size() < 2 || command.size() > 3) {
     std::cout<<"Incorrect input" << std::endl;
     return;
   }
   if (!local_base.count(command[1])) {
-    std::cout<<"There in no file with such a key. Try expand your_directory." <<std::endl;
+    std::cout<<"There in no file with such a key. Try again." <<std::endl;
     return;
   }
+  double time = 0;
   if (command.size() == 3) {
-    double time = std::stod(command[2]);
-      if (time > 1 || time < 0) {
-        std::cout<<"Incorrect time" <<std::endl;
-        return;
-      }
-      speaker.set_file(local_base[command[1]]);
-      speaker.set_time(time);
-    } else {
-      speaker.set_file(local_base[command[1]]);
+    try {
+      time = std::stod(command[2]);
+    } catch (std::invalid_argument const& ex){
+      std::cout << "invalid time" << std::endl;
+      return;
     }
+  }
+  if (time >1 || time < 0) {
+    std::cout<<"invalid range try from 0 to 1" << std::endl;
+    return;
+  }
+  play(local_base[command[1]], time);
+}
+
+
+void client::play(std::string path, double time) {
+  open(cache_directory);
+  audio::play speaker;
+  speaker.set_file(path);
+  speaker.set_time(time);
+  std::string extension = std::filesystem::path(path).extension();
+  if (extension == ".mp3") {
+    speaker.set_config(0, 2, 1024, 0, 48000);
+  }
+  if (extension == ".wav") {
+    speaker.set_config(0, 2, 1024, 0, 44100);
+  }
+  if (extension == ".cd") {
+    speaker.set_config(0, 2, 1024, 0, 44100);
+  }
   std::cout << "Press enter to interrupt playback" << std::endl;  
   std::thread th([&](){
     speaker.play_file();
   });
 
   bool interrupt = false;
-  std::thread th1([this, &interrupt](){
+  std::thread th1([&speaker, &interrupt](){
     while (!speaker.get_status()) {}  
     std::cout<<std::fixed<<std::setprecision(1);
     while (speaker.get_status()) { 
@@ -169,7 +202,7 @@ void client::play(std::vector<std::string> command) {
       std::cout<<"Press enter to continue..."<<std::flush;
     }
   });
-  std::jthread th2([this, &interrupt] {
+  std::jthread th2([&speaker, &interrupt] {
     getchar();
     interrupt = true;
     speaker.off();
@@ -183,38 +216,53 @@ void client::play(std::vector<std::string> command) {
   }
 }
 
-void client::record(std::vector<std::string> command) {
-  if (command.size() < 2) {
+
+
+void client::handler_record(std::vector<std::string> command) {
+  open(cache_directory);
+  if (command.size() < 2 || command.size() > 3) {
     std::cout<<"Incorrect command" << std::endl;
     return;
   }
-  std::string path;
+  if (local_base.count(command[1])) {
+    std::cout<<"A file with such a key already exists" << std::endl;
+    return; 
+  }
+  std::string extension = ".wav";
   if (command.size() == 3) {
-    if (!std::filesystem::exists(command[2])) {
-      std::filesystem::create_directories(command[2]);
+    if (command[2] == "cd") {
+    } else if (command[2] == "mp3") {
+      extension = ".mp3";
+    } else if (command[2] == "wav") {
+      extension = ".wav";
     } else {
-      for (const auto & entry : std::filesystem::directory_iterator(command[2])) {
-        if (entry.path().extension() == ".raw" && entry.path().stem() == command[1]) {
-          std::cout<<"Such file already exists" << std::endl;
-          return;
-        }
-        path = command[2] + "/" + command[1] + ".raw";
-      }
+      std::cout<<"Incorrect extension" << std::endl;
+      return;
     }
-  } else {
-    for (const auto & entry : std::filesystem::directory_iterator(cache_directory)) {
-      if (entry.path().extension() == ".raw" && entry.path().stem() == command[1]) {
-        std::cout<<"Such file already exists" << std::endl;
-        return;
-      }
-    path = cache_directory + command[1] + ".raw";
-    }
+  }
+  std::string path = cache_directory + command[1] + extension;
+
+  record(path);
+}
+
+
+void client::record(std::string path) {
+  std::string extension = std::filesystem::path(path).extension();
+  audio::record microphone;
+  if (extension == ".mp3") {
+    microphone.set_config(0, 2, 1024, 0, 48000);
+  }
+  if (extension == ".wav") {
+    microphone.set_config(0, 2, 1024, 0, 44100);
+  }
+  if (extension == ".cd") {
+    microphone.set_config(0, 2, 1024, 0, 44100);
   }
   std::cout << "Press enter to stop record" << std::endl;
   std::thread th([&](){
     microphone.input(path);
   });
-  std::thread th1([this]() {
+  std::thread th1([&microphone]() {
     while (!microphone.get_start_record()) {}  
     std::cout<<std::fixed<<std::setprecision(1);
     while (microphone.get_status()) { 
@@ -226,36 +274,6 @@ void client::record(std::vector<std::string> command) {
   microphone.off();
   th.join();
   th1.join();
-  local_base[command[1]] = path;
-}
 
-
-
-
-
-
-// LIZA ////////////////////////////////////////////////////////////////////
-void client::push(std::vector<std::string> command) {
-  if (command.size() < 2) {
-    std::cout<<"Incorrect input" << std::endl;
-    return;
-  }
-    if (!local_base.count(command[1])) {
-    std::cout<<"There in no file with such a key. Try expand your_directory." <<std::endl;
-    return;
-  }
-  std::string path = cache_directory + command[1] + ".raw";
-  std::make_shared<Client>(io_context)->push(server,port,path);
-} 
-
-
-// LIZA ////////////////////////////////////////////////////////////////////
-void client::show_server(std::vector<std::string> command) {
-  std::string files std::make_shared<Client>(io_context)->push(server,port,path);
-  //here's the parsing of the line and the output
-}
-
-// LIZA ////////////////////////////////////////////////////////////////////////
-void client::download(std::vector<std::string> command) {
-  std::make_shared<Client>(io_context)->download(server,port,key);
+  local_base[std::filesystem::path(path).stem()] = path;
 }
