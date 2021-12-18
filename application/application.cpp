@@ -101,6 +101,7 @@ void client::help() {
 
 
 void client::show_base() {
+  open(cache_directory);
   for (auto it = local_base.begin(); it!=local_base.end(); it++) {
     std::cout<<"key: "<< it->first <<"\t"<< "path: " << it->second << std::endl;
   }
@@ -115,10 +116,12 @@ void client::update(std::string path, std::string extension) {
 }
 
 void client::open(std::string path) {
+  
   if (!std::filesystem::exists(path)) {
     std::filesystem::create_directories(path);
     return;
   }
+  cache_directory = path;
   local_base.clear();
   update(path, ".wav");
   update(path, ".mp3");
@@ -162,7 +165,6 @@ void client::handler_play(std::vector<std::string> command) {
 
 
 void client::play(std::string path, double time) {
-  local_base.clear();
   open(cache_directory);
   audio::play speaker;
   speaker.set_file(path);
@@ -212,7 +214,6 @@ void client::play(std::string path, double time) {
 
 
 void client::handler_record(std::vector<std::string> command) {
-  local_base.clear();
   open(cache_directory);
   if (command.size() < 2 || command.size() > 3) {
     std::cout<<"Incorrect command" << std::endl;
@@ -222,7 +223,7 @@ void client::handler_record(std::vector<std::string> command) {
     std::cout<<"A file with such a key already exists" << std::endl;
     return; 
   }
-  std::string extension = ".cd";
+  std::string extension = ".wav";
   if (command.size() == 3) {
     if (command[2] == "cd") {
     } else if (command[2] == "mp3") {
