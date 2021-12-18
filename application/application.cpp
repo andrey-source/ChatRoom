@@ -9,18 +9,13 @@
 
 
 
+client::client()
+  : status(true), server(SERVER), port(PORT), cache_directory(CACHE){}
 
-client::client(std::string directory) 
-  : cache_directory(directory), status(true)
-  {
-    open(cache_directory);
-  };
+client::client(std::string server, std::string port)
+  : status(true), server(server), port(port), cache_directory(CACHE){}
 
-client::client() 
-  : cache_directory(CACHE), status(true)
-  {
-    open(cache_directory);
-  };  
+
 
 
 
