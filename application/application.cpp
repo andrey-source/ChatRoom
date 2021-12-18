@@ -101,7 +101,7 @@ void client::help() {
   std::cout<<"send a message to the server:\t\t\t push audio_message" << std::endl;
   std::cout<<"request a list of messages from the server:\t request" << std::endl;
   std::cout<<"remove file:\t\t\t\t\t remove your_file" << std::endl;
-  std::cout<<"show messages in directory:\t\t\t show" << std::endl;
+  std::cout<<"show audio files in current directory:\t\t ls" << std::endl;
   std::cout<<"close application:\t\t\t\t close" << std::endl;
   std::cout<<std::endl;
 }
