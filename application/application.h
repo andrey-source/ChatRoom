@@ -8,11 +8,11 @@
 #define PORT "80"
 
 
-class client
+class application
 {
 public:
-  client();   
-  client(std::string server, std::string port);
+  application();   
+  application(std::string server, std::string port);
   
   void run();
 private:

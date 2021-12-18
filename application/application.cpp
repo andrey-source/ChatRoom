@@ -5,21 +5,22 @@
 #include <filesystem>
 #include <cstdio>
 #include "application.h"
+#include "async.http.client.h"
 
 
 
 
-client::client()
+application::application()
   : status(true), server(SERVER), port(PORT), cache_directory(CACHE){}
 
-client::client(std::string server, std::string port)
+application::application(std::string server, std::string port)
   : status(true), server(server), port(port), cache_directory(CACHE){}
 
 
 
 
 
-void client::run() {
+void application::run() {
   std::cout<<"client started" <<std::endl;
   while(status){
     std::cout<<std::endl;
@@ -83,16 +84,16 @@ void client::run() {
     //   download(command);
     //   continue;
     // }
-    // if (command[0] == "show") {  // LIZA
-    //   show_server(command);
-    //   continue;
-    // }
+    if (command[0] == "show") {  // LIZA
+      show_server(command);
+      continue;
+    }
     std::cout << "Incorrect command" << std::endl;
   }
 }
 
 
-void client::help() {
+void application::help() {
   std::cout << std::endl << std::endl;
   std::cout<<"action:\t\t\t\t\t\t command:"<<std::endl<<std::endl;
   std::cout<<"open directory:\t\t\t\t\t open your_directory" << std::endl;
@@ -107,14 +108,14 @@ void client::help() {
 }
 
 
-void client::ls() {
+void application::ls() {
   open(cache_directory);
   for (auto it = local_base.begin(); it!=local_base.end(); it++) {
     std::cout<<"key: "<< it->first <<"\t"<< "path: " << it->second << std::endl;
   }
 }
 
-void client::update(std::string path, std::string extension) {
+void application::update(std::string path, std::string extension) {
   for (const auto & entry : std::filesystem::directory_iterator(path)) {
     if (entry.path().extension() == extension) {
       local_base[entry.path().stem()] = entry.path();
@@ -122,8 +123,7 @@ void client::update(std::string path, std::string extension) {
   }  
 }
 
-void client::open(std::string path) {
-  
+void application::open(std::string path) { 
   if (!std::filesystem::exists(path)) {
     std::filesystem::create_directories(path);
     return;
@@ -135,7 +135,7 @@ void client::open(std::string path) {
   update(path, ".cd"); 
 }
 
-bool client::remove(std::string key) {
+bool application::remove(std::string key) {
   if (std::filesystem::remove(local_base[key])) {
     local_base.erase(key);
     return true;
@@ -143,7 +143,7 @@ bool client::remove(std::string key) {
   return false;
 }
 
-void client::handler_play(std::vector<std::string> command) {
+void application::handler_play(std::vector<std::string> command) {
   if (command.size() < 2 || command.size() > 3) {
     std::cout<<"Incorrect input" << std::endl;
     return;
@@ -169,7 +169,7 @@ void client::handler_play(std::vector<std::string> command) {
 }
 
 
-void client::play(std::string path, double time) {
+void application::play(std::string path, double time) {
   open(cache_directory);
   audio::play speaker;
   speaker.set_file(path);
@@ -218,7 +218,7 @@ void client::play(std::string path, double time) {
 
 
 
-void client::handler_record(std::vector<std::string> command) {
+void application::handler_record(std::vector<std::string> command) {
   open(cache_directory);
   if (command.size() < 2 || command.size() > 3) {
     std::cout<<"Incorrect command" << std::endl;
@@ -246,7 +246,7 @@ void client::handler_record(std::vector<std::string> command) {
 }
 
 
-void client::record(std::string path) {
+void application::record(std::string path) {
   std::string extension = std::filesystem::path(path).extension();
   audio::record microphone;
   if (extension == ".mp3") {
@@ -274,6 +274,14 @@ void client::record(std::string path) {
   microphone.off();
   th.join();
   th1.join();
-
   local_base[std::filesystem::path(path).stem()] = path;
 }
+
+
+
+
+ // LIZA
+  void application::show_server(std::vector<std::string> command) {
+    net::io_context io_context;
+    std::make_shared<client::Client>(io_context)->show_server(server,port);
+  };

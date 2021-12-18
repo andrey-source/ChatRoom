@@ -65,7 +65,6 @@ namespace server3 {
                             res.result(http::status::ok);
                             res.body() =key_path.str();
                             res.prepare_payload();
-                            s
 
                              http::async_write(stream_,std::move(res), beast::bind_front_handler(
                                                             &Connection::handle_write_last,

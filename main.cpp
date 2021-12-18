@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     // }
     // return 0;
 
-    client cl;
+    application cl;
     cl.run();
 
 
