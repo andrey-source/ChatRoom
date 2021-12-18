@@ -4,8 +4,8 @@
 
 
 #define CACHE "../voice_data/"
-#define SERVER "localhost 5000"
-#define PORT "80"
+#define SERVER "localhost"
+#define PORT "5000"
 
 
 class application

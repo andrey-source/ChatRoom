@@ -76,10 +76,10 @@ void application::run() {
       std::cout << "file delection error" << std::endl;
       continue;
     }
-    // if (command[0] == "push") { //LIZA
-    //   push(command);
-    //   continue;
-    // }
+    if (command[0] == "push") { //LIZA
+      push(command);
+      continue;
+    }
     // if (command[0] == "download") {  //LIZA
     //   download(command);
     //   continue;
@@ -281,7 +281,15 @@ void application::record(std::string path) {
 
 
  // LIZA
-  void application::show_server(std::vector<std::string> command) {
-    net::io_context io_context;
-    std::make_shared<client::Client>(io_context)->show_server(server,port);
-  };
+void application::show_server(std::vector<std::string> command) {
+  net::io_context io_context;
+  std::make_shared<client::Client>(io_context)->show_server(server, port);
+  io_context.run();
+};
+
+ //LIZA
+void application::push(std::vector<std::string> command) {
+  net::io_context io_context;
+  std::make_shared<client::Client>(io_context)->push(server, port, local_base[command[1]]);
+  io_context.run();
+}
