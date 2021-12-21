@@ -3,7 +3,7 @@
 #include "audio.h"
 
 
-#define CACHE "../voice_data/"
+#define CACHE "voice_data"
 #define SERVER "localhost"
 #define PORT "5000"
 

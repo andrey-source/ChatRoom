@@ -80,10 +80,10 @@ void application::run() {
       push(command);
       continue;
     }
-    // if (command[0] == "download") {  //LIZA
-    //   download(command);
-    //   continue;
-    // }
+    if (command[0] == "download") {  //LIZA
+      download(command);
+      continue;
+    }
     if (command[0] == "show") {  // LIZA
       show_server(command);
       continue;
@@ -100,7 +100,7 @@ void application::help() {
   std::cout<<"record a voice message:\t\t\t\t record audio_message" << std::endl;
   std::cout<<"listen to the message:\t\t\t\t play audio_message" << std::endl;
   std::cout<<"send a message to the server:\t\t\t push audio_message" << std::endl;
-  std::cout<<"request a list of messages from the server:\t request" << std::endl;
+  std::cout<<"request a list of messages from the server:\t show" << std::endl;
   std::cout<<"remove file:\t\t\t\t\t remove your_file" << std::endl;
   std::cout<<"show audio files in current directory:\t\t ls" << std::endl;
   std::cout<<"close application:\t\t\t\t close" << std::endl;
@@ -124,13 +124,13 @@ void application::update(std::string path, std::string extension) {
 }
 
 void application::open(std::string path) { 
+  if (path[path.size() - 1] != '/') {
+    path +='/';
+  }
   try {
     if (!std::filesystem::exists(path)) {
       cache_directory = path;
       std::filesystem::create_directories(path);
-      if (cache_directory[cache_directory.size() -1 ] != '/') {
-        cache_directory += '/';
-      }
       return;
   }
     cache_directory = path;
@@ -300,5 +300,12 @@ void application::show_server(std::vector<std::string> command) {
 void application::push(std::vector<std::string> command) {
   net::io_context io_context;
   std::make_shared<client::Client>(io_context)->push(server, port, local_base[command[1]]);
+  io_context.run();
+}
+
+void application::download(std::vector<std::string> command) {
+  net::io_context io_context;
+  std::string path = cache_directory + command[1] + ".wav";
+  std::make_shared<client::Client>(io_context)->download(server, port, command[1], path);
   io_context.run();
 }
