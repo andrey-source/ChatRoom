@@ -124,16 +124,25 @@ void application::update(std::string path, std::string extension) {
 }
 
 void application::open(std::string path) { 
-  if (!std::filesystem::exists(path)) {
-    std::filesystem::create_directories(path);
-    return;
+  try {
+    if (!std::filesystem::exists(path)) {
+      cache_directory = path;
+      std::filesystem::create_directories(path);
+      if (cache_directory[cache_directory.size() -1 ] != '/') {
+        cache_directory += '/';
+      }
+      return;
   }
-  cache_directory = path;
-  local_base.clear();
-  update(path, ".wav");
-  update(path, ".mp3");
-  update(path, ".cd"); 
-}
+    cache_directory = path;
+    local_base.clear();
+    update(path, ".wav");
+    update(path, ".mp3");
+    update(path, ".cd"); 
+  } catch (std::exception &e) {
+    std::cout << "Incorrect input" << std::endl;
+    }
+  }
+
 
 bool application::remove(std::string key) {
   if (std::filesystem::remove(local_base[key])) {
