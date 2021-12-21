@@ -117,7 +117,7 @@ void application::ls() {
     struct stat t_stat;
     stat(it->second.c_str(), &t_stat);
     struct tm *timeinfo = localtime(&t_stat.st_ctime);
-    std::cout<<"file: "<< it->first <<"\t"<< "time: " << asctime(timeinfo) << std::endl;
+    std::cout<<"file: "<< it->first <<"\t"<< "time: " << asctime(timeinfo);
   }
 }
 
