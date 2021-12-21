@@ -6,6 +6,9 @@
 #include <cstdio>
 #include "application.h"
 #include "async.http.client.h"
+#include <array>
+#include <sys/stat.h>
+#include <time.h>
 
 
 
@@ -111,7 +114,10 @@ void application::help() {
 void application::ls() {
   open(cache_directory);
   for (auto it = local_base.begin(); it!=local_base.end(); it++) {
-    std::cout<<"key: "<< it->first <<"\t"<< "path: " << it->second << std::endl;
+    struct stat t_stat;
+    stat(it->second.c_str(), &t_stat);
+    struct tm *timeinfo = localtime(&t_stat.st_ctime);
+    std::cout<<"file: "<< it->first <<"\t"<< "time: " << asctime(timeinfo) << std::endl;
   }
 }
 
@@ -166,12 +172,12 @@ void application::handler_play(std::vector<std::string> command) {
     try {
       time = std::stod(command[2]);
     } catch (std::invalid_argument const& ex){
-      std::cout << "invalid time" << std::endl;
+      std::cout << "Invalid time" << std::endl;
       return;
     }
   }
   if (time >1 || time < 0) {
-    std::cout<<"invalid range try from 0 to 1" << std::endl;
+    std::cout<<"Invalid range try from 0 to 1" << std::endl;
     return;
   }
   play(local_base[command[1]], time);
@@ -250,7 +256,6 @@ void application::handler_record(std::vector<std::string> command) {
     }
   }
   std::string path = cache_directory + command[1] + extension;
-
   record(path);
 }
 
