@@ -294,8 +294,6 @@ void application::record(std::string path) {
 }
 
 
-
-
  // LIZA
 void application::show_server(std::vector<std::string> command) {
   net::io_context io_context;
@@ -304,52 +302,50 @@ void application::show_server(std::vector<std::string> command) {
 };
 
  
-
-//LIZA
 void application::push(std::vector<std::string> command) {
 
   std::string path = cache_directory + PUSH_CACHE;
   std::filesystem::create_directories(path);
 
-  std::vector<std::string> files;  // пути к файлам
-  std::string path_i;  // путь к iму файлу
+  std::string path_i = cache_directory + PUSH_CACHE + command[1] + ".wav";  // название текущего файла
   std::ofstream file_i;
 
   std::ifstream file(local_base[command[1]], std::ifstream::ate | std::ifstream::binary);  // устанавливаю указатель в конец файла
   size_t size = file.tellg();  // считаю размер файла
   file.seekg(0, std::ios_base::beg); // устанавливаю указатель в начало файла
   size_t pos = file.tellg();  // устанавливаю текующую позицию
-  int i = 0;  // номер файла
   char chunck[CHUNCK_SIZE];  // буфер для чтения
   while (pos < size) {
-    path_i = cache_directory + PUSH_CACHE + command[1] + std::to_string(i) + ".wav";  // собираю названия iго файла
-    files.push_back(path_i);
     if (pos + CHUNCK_SIZE < size) {
       file.read(chunck, CHUNCK_SIZE);  // читаю чанк данных
       file_i.open(path_i, std::ifstream::binary); // создаю и открываю файл 
       file_i.write(chunck, CHUNCK_SIZE);  // записываю чанк в файл
       file_i.close();
       pos += CHUNCK_SIZE;
-      i++;
+      net::io_context io_context;
+      std::make_shared<client::Client>(io_context)->push(server, port, path_i);
+      io_context.run();
     } else {
       std::ofstream file_i(path_i, std::ifstream::binary);
       file_i.write(chunck, size - pos);
       file_i.close();
+      net::io_context io_context;
+      std::make_shared<client::Client>(io_context)->push(server, port, path_i);
+      io_context.run();
       pos = size;
     }
   }
+  /* отправляю пустой файл*/
+  file_i.open(path_i, std::ifstream::binary); // создаю и открываю
+  net::io_context io_context;
+  std::make_shared<client::Client>(io_context)->push(server, port, path_i);
+  io_context.run();
+
   file.close();
-  for (size_t i = 0; i < files.size(); i++) {
-    net::io_context io_context;
-    std::make_shared<client::Client>(io_context)->push(server, port, files[i]);
-    io_context.run();
-  }
   std::filesystem::remove_all(path);
 }
 
-
 void application::download(std::vector<std::string> command) {
-
   std::string path = cache_directory + DOWNLOAD_CACHE;  // временная директория
   std::filesystem::create_directories(path);
   std::string file_path = cache_directory + '/' + command[1] + ".wav"; // путь финального файла
@@ -364,6 +360,7 @@ void application::download(std::vector<std::string> command) {
     file_i.open(path_i, std::ifstream::ate | std::ifstream::binary);
     size_t size = file_i.tellg();
     if (size == 0) {
+      file_i.close();
       break;
     }
     file_i.seekg(0, std::ios_base::beg); // устанавливаю указатель в начало файла
@@ -372,36 +369,31 @@ void application::download(std::vector<std::string> command) {
     file.write(chunck, size);
   }
   file.close();
-
-
-  // net::io_context io_context;
-  // std::string path = cache_directory + command[1] + ".wav";
-  // std::make_shared<client::Client>(io_context)->download(server, port, command[1], path);
-  // io_context.run();
-
 }
 
 
+// void application::download(std::vector<std::string> command) {
 
-
-  /* сливаю временные файлы и удаляю временную директорию*/
-  // std::vector<std::string> files;
-  // for (const auto & entry : std::filesystem::directory_iterator(path)) {
-  //   files.push_back(entry.path());  // вектор файлов из которых собирать
-  // }  
+//   /* сливаю временные файлы и удаляю временную директорию*/
+//   std::string path = cache_directory + DOWNLOAD_CACHE;  // временная директория
+//   std::vector<std::string> files;
+//   for (const auto & entry : std::filesystem::directory_iterator(path)) {
+//     files.push_back(entry.path());  // вектор файлов из которых собирать
+//   }  
   
-  // std::sort(files.begin(), files.end());  // файлы иногда перемешиваются, сортирую
-  // char chunck[chunck_size];  // буфер для чтения
-  // std::ifstream file_i;  // переменная для перебора всех файлов
-  // std::string file_path = cache_directory + '/' + command[1] + ".wav";
-  // std::ofstream file(file_path, std::ifstream::binary);  // переменная для записи результата
-  // for (size_t i = 0 ; i < files.size(); i++) {
-  //   file_i.open(files[i], std::ifstream::ate | std::ifstream::binary);
-  //   size_t size = file_i.tellg();  // считаю размер файла
-  //   file_i.seekg(0, std::ios_base::beg); // устанавливаю указатель в начало файла
-  //   file_i.read(chunck, size);
-  //   file_i.close();
-  //   file.write(chunck, size);
-  // }
-  // file.close();
-  // std::filesystem::remove_all(path);
+//   std::sort(files.begin(), files.end());  // файлы иногда перемешиваются, сортирую
+//   char chunck[CHUNCK_SIZE];  // буфер для чтения
+//   std::ifstream file_i;  // переменная для перебора всех файлов
+//   std::string file_path = cache_directory + '/' + command[1] + ".wav";
+//   std::ofstream file(file_path, std::ifstream::binary);  // переменная для записи результата
+//   for (size_t i = 0 ; i < files.size(); i++) {
+//     file_i.open(files[i], std::ifstream::ate | std::ifstream::binary);
+//     size_t size = file_i.tellg();  // считаю размер файла
+//     file_i.seekg(0, std::ios_base::beg); // устанавливаю указатель в начало файла
+//     file_i.read(chunck, size);
+//     file_i.close();
+//     file.write(chunck, size);
+//   }
+//   file.close();
+//   std::filesystem::remove_all(path);
+// }
