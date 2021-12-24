@@ -4,8 +4,10 @@
 
 
 #define CACHE "voice_data"
+#define PUSH_CACHE "/push_cache//"
 #define SERVER "localhost"
 #define PORT "5000"
+#define chunck_size 524288 // 512 kb
 
 
 class application

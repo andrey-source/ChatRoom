@@ -301,16 +301,51 @@ void application::show_server(std::vector<std::string> command) {
   io_context.run();
 };
 
- //LIZA
-void application::push(std::vector<std::string> command) {
-  net::io_context io_context;
-  std::make_shared<client::Client>(io_context)->push(server, port, local_base[command[1]]);
-  io_context.run();
-}
-
+ 
 void application::download(std::vector<std::string> command) {
   net::io_context io_context;
   std::string path = cache_directory + command[1] + ".wav";
   std::make_shared<client::Client>(io_context)->download(server, port, command[1], path);
   io_context.run();
+}
+
+
+//LIZA
+void application::push(std::vector<std::string> command) {
+
+  std::string path = cache_directory + PUSH_CACHE;
+  std::filesystem::create_directories(path);
+
+  std::vector<std::string> files;
+
+  std::ifstream file(local_base[command[1]], std::ifstream::ate | std::ifstream::binary);
+  size_t size = file.tellg();
+  file.seekg(0, std::ios_base::beg);
+  size_t pos = file.tellg();
+  int i = 0;
+  char chunck[chunck_size];
+  while (pos < size) {
+    std::string path_i = cache_directory + PUSH_CACHE + command[1] + std::to_string(i) + ".wav";
+    files.push_back(path_i);
+    if (pos + chunck_size < size) {
+      file.read(chunck, chunck_size);
+      std::ofstream file_i(path_i, std::ifstream::binary);
+      file_i.write(chunck, chunck_size);
+      file_i.close();
+      pos += chunck_size;
+      i++;
+    } else {
+      std::ofstream file_i(path_i, std::ifstream::binary);
+      file_i.write(chunck, size - pos);
+      file_i.close();
+      pos = size;
+    }
+  }
+  file.close();
+  for (size_t i = 0; i < files.size(); i++) {
+    net::io_context io_context;
+    std::make_shared<client::Client>(io_context)->push(server, port, files[i]);
+    io_context.run();
+  }
+  std::filesystem::remove_all(path);
 }
