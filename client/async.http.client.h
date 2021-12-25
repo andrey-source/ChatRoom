@@ -28,7 +28,8 @@ namespace client {
 
 		void push(const std::string& server,
 			const std::string& port,
-			const std::string& message);
+			const std::string& message,
+			const std::string& path);
 
 
 		void show_server(const std::string& server,
@@ -65,7 +66,9 @@ namespace client {
 		beast::flat_buffer buffer_; // (Must persist between reads)
 		beast::multi_buffer buffer_file; // (Must persist between reads)
 		std::string client_path;
-
+		std::string check = "check";
+		int size_before = 0;
+		int flag =0;
 		http::request<http::file_body> request_file;
 		http::request<http::string_body> request_;
 		http::response<http::string_body> response_;
