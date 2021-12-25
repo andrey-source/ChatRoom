@@ -88,7 +88,7 @@ namespace client {
                                 const std::string& key,
                                 const std::string& path)
     {
-        //client_path = path;
+        client_path = path;
         //boost::filesystem::path p(message.c_str());
         //check = "check";
         request_.version(10);
