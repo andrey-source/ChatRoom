@@ -8,6 +8,8 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <sys/stat.h>
+#include <time.h>
 
 namespace server3 {
     
@@ -219,14 +221,16 @@ namespace server3 {
 
             for (const auto & entry : std::filesystem::directory_iterator(server_path)) 
             {
-
                 local_base[entry.path().stem()] = entry.path();
-                key_path << " key :"<< entry.path().stem()<<" path: "<< entry.path()<<"\r\n";
+            }
+            for (auto it = local_base.begin(); it!=local_base.end(); it++) {
+                struct stat t_stat;
+                stat(it->second.c_str(), &t_stat);
+                struct tm *timeinfo = localtime(&t_stat.st_ctime);
+                key_path<<"file: "<< it->first <<"\t"<< "time: " << asctime(timeinfo);
 
             }
-
         }
-
             std::size_t Connection::number_of_files(std::filesystem::path path)
         {
             using std::filesystem::directory_iterator;
@@ -234,3 +238,5 @@ namespace server3 {
         }
      // namespace server3
 }
+
+

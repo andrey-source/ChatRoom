@@ -18,6 +18,9 @@
 #include <map>
 #include <filesystem>
 
+
+#define DATA_SERVER "../data_server/"
+
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
@@ -69,7 +72,7 @@ namespace server3 {
             beast::multi_buffer buffer_File;
             beast::flat_buffer buffer_req;
             beast::flat_buffer buffer_;
-            std::string server_path = "/home/liza/Downloads/project/data_server";
+            std::string server_path = DATA_SERVER;
             int flag;
             std::map<std::string, std::string> local_base;
             boost::beast::string_view s ;

@@ -51,6 +51,9 @@ namespace client {
         // Cache the size since we need it after the move
         // use the full host:port here
         request_file.method(http::verb::post);
+
+
+        std::cout << message << std::endl;
         request_file.target("record");
         request_file.version(10);
         request_file.content_length(body.size());
