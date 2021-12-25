@@ -44,7 +44,8 @@ namespace server3 {
 
             void handle_read_first(beast::error_code e,
                              std::size_t bytes_transferred);
-
+            void read_requiest(beast::error_code e,
+                                      std::size_t bytes_transferred);
             /// Handle completion of a write operation.
             void handle_write(bool close,
                               beast::error_code e,
@@ -56,7 +57,8 @@ namespace server3 {
                               std::size_t bytes_transferred);
 
             void do_close();
-            void show_base(std::stringstream& key_path);
+           // void handle_read_file();
+            void show_base(std::stringstream& key_path,std::string& server_path);
             std::size_t number_of_files(std::filesystem::path path);
 
         private:
@@ -65,11 +67,13 @@ namespace server3 {
 
             beast::tcp_stream stream_;
             beast::multi_buffer buffer_File;
+            beast::flat_buffer buffer_req;
             beast::flat_buffer buffer_;
-            std::string server_path = "../data_server";
-
+            std::string server_path = "/home/liza/Downloads/project/data_server";
+            int flag;
             std::map<std::string, std::string> local_base;
-            
+            boost::beast::string_view s ;
+            std::size_t count_file;
             http::request<http::string_body> request_;
             http::request<http::file_body> request_file;
             http::response<http::string_body> res;

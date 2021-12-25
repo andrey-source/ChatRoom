@@ -41,7 +41,7 @@ namespace server3 {
                                      std::size_t bytes_transferred)
         {     
             std::stringstream key_path;
-            show_base(key_path);
+            show_base(key_path,server_path);
             if (!e)
             {       if (request_.method()==http::verb::post)
                     {
@@ -50,7 +50,7 @@ namespace server3 {
                         res.result(http::status::ok);
                         res.body() =  "file";
                         res.prepare_payload();
-
+                        s = std::move(request_.target());
                         http::async_write(stream_,std::move(res), beast::bind_front_handler(
                                                             &Connection::handle_write_first,
                                                             shared_from_this()));
@@ -59,25 +59,28 @@ namespace server3 {
                         if (request_.target()=="show")
                         {
                             std::stringstream key_path;
-                            show_base(key_path);
+                            show_base(key_path,server_path);
                             res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
                             res.set(http::field::content_type, "application/text");
                             res.result(http::status::ok);
                             res.body() =key_path.str();
                             res.prepare_payload();
-                            s
 
                              http::async_write(stream_,std::move(res), beast::bind_front_handler(
                                                             &Connection::handle_write_last,
                                                             shared_from_this()));
 
                         }else{
-                                
+
                                 beast::error_code ec;
                                 http::file_body::value_type resp_body;
-                                std::cout<<(local_base[request_.body()]).c_str()<<std::endl;
-                                resp_body.open((local_base[request_.body()]).c_str(), beast::file_mode::read, ec);
-
+                                //std::cout<<(local_base[request_.body()]).c_str()<<std::endl;
+                                std::string path_file = server_path +"/"+request_.body()+"/"+request_.body()+std::to_string(count_file)+".wav";
+                                std::cout<<path_file<<std::endl;
+                                std::cout<<server_path +"/"+request_.body()<<std::endl;
+                                std::cout<<server_path +"/"+request_.body()+"/"+request_.body()+std::to_string(count_file)+".wav"<<std::endl;
+                                resp_body.open(path_file.c_str(), beast::file_mode::read, ec);
+                                count_file++;
                                 // Handle the case where the file doesn't exist
                                 if(ec == beast::errc::no_such_file_or_directory)
                                         std::cout << "Error: " << ec << "\n";
@@ -93,10 +96,24 @@ namespace server3 {
                                 res_file.set(http::field::content_type, "application/text");
                                 res_file.body() =  std::move(resp_body);
                                 res_file.content_length(resp_body.size());
+                                std::cout<<"body size "<<resp_body.size()<<std::endl;
+                                std::cout<<count_file<<std::endl;
+                                std::cout<<server_path +"/"+std::string(s)<<std::endl;
+                                std::cout<<number_of_files(server_path +"/"+request_.body())<<std::endl;
 
+                                if (number_of_files(server_path +"/"+request_.body())- count_file == 0){
                                 http::async_write(stream_,res_file, beast::bind_front_handler(
                                                             &Connection::handle_write_last,
                                                             shared_from_this()));
+                                    count_file = 0 ;
+                                }
+                                else{
+                                    std::cout<<"put in to client"<<std::endl;
+                                    std::cout<<"fie number "<<count_file<<std::endl;
+                                    http::async_write(stream_,res_file, beast::bind_front_handler(
+                                                            &Connection::handle_write_last,
+                                                            shared_from_this()));
+                                } 
 
                         }
                     }
@@ -108,11 +125,17 @@ namespace server3 {
 ;
         }
 
-
+        
         void Connection::do_read()
         {
-            std::filesystem::path path{server_path}; //creates TestingFolder object on C:
-            path /=   "record"+ std::to_string(number_of_files(server_path))+".wav"; //put something into there
+            if (!std::filesystem::exists(server_path  +"/"+std::string(s))) {
+                std::filesystem::create_directories(server_path  +"/"+std::string(s));
+            }
+           
+
+            std::filesystem::path path{server_path +"/"+std::string(s)}; //creates TestingFolder object on C:
+            //std::to_string(number_of_files(server_path))
+            path /= std::string(s) + std::to_string(number_of_files(server_path +"/"+std::string(s)))+".wav"; //put something into there
             std::filesystem::create_directories(path.parent_path()); //add directories based on the object path (without this line it will not work)
 
             std::ofstream ofs(path);
@@ -120,7 +143,7 @@ namespace server3 {
 
             beast::error_code ec;
             request_file.body().open(path.c_str(),boost::beast::file_mode::write, ec);
-
+            flag = 1;
             if(ec == beast::errc::no_such_file_or_directory)
                 std::cout << "Error: " << ec << "\n";
 
@@ -136,7 +159,14 @@ namespace server3 {
             // Read a request
             
         }
-
+        void Connection::read_requiest(beast::error_code e,
+                                      std::size_t bytes_transferred)
+        {
+            http::async_read(stream_, buffer_, request_,
+                             beast::bind_front_handler(
+                                     &Connection::handle_read_first,
+                                     shared_from_this()));
+        }
         void Connection::handle_write_first(beast::error_code e,
                                       std::size_t bytes_transferred)
         {   
@@ -153,14 +183,23 @@ namespace server3 {
         void Connection::handle_write_last(beast::error_code e,
                                       std::size_t bytes_transferred)
         {   
-            if (!e)
-            {
-                do_close();
+
+            if (flag){
+                    if (request_file.body().size()!=0)
+                    do_read();   
+                    else
+                    do_close();
             }
-            else
-            {   std::cout << "Pampam " << "\n";
-                do_close();      
-                std::cout << "Error: " << e.message() << "\n";
+            else{
+                if (!e){
+                        do_close();
+                }
+
+                else
+                {   std::cout << "Pampam " << "\n";
+                    do_close();      
+                    std::cout << "Error: " << e.message() << "\n";
+                }
             }
         }
 
@@ -171,7 +210,7 @@ namespace server3 {
 
         }
 
-        void Connection::show_base(std::stringstream& key_path)
+        void Connection::show_base(std::stringstream& key_path,std::string& server_path)
         {
             
             if (!std::filesystem::exists(server_path)) {
@@ -180,11 +219,10 @@ namespace server3 {
 
             for (const auto & entry : std::filesystem::directory_iterator(server_path)) 
             {
-                if (entry.path().extension() == ".wav") 
-                {
+
                 local_base[entry.path().stem()] = entry.path();
                 key_path << " key :"<< entry.path().stem()<<" path: "<< entry.path()<<"\r\n";
-                }
+
             }
 
         }
