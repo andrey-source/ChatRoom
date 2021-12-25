@@ -25,12 +25,13 @@ namespace client {
 
     void Client::push(const std::string& server,
         const std::string& port,
-        const std::string& message)
+        const std::string& message,
+        const std::string& path)
     {
         /// send server request if it chat  
         request_.version(10);
         request_.method(http::verb::post);
-        request_.target("record");
+        request_.target(message);
         request_.set(http::field::host, server);
         request_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
         request_.prepare_payload();
@@ -38,7 +39,7 @@ namespace client {
         /// send server request if it file
         beast::error_code ec;
         http::file_body::value_type body;
-        body.open(message.c_str(), beast::file_mode::read, ec);
+        body.open(path.c_str(), beast::file_mode::read, ec);
 
         // Handle the case where the file doesn't exist
         if (ec == beast::errc::no_such_file_or_directory)
@@ -51,8 +52,8 @@ namespace client {
         // Cache the size since we need it after the move
         // use the full host:port here
         request_file.method(http::verb::post);
-        request_file.target("record");
         request_file.version(10);
+        request_file.target(message);
         request_file.content_length(body.size());
         request_file.set(http::field::host, server);
         request_file.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
@@ -87,9 +88,9 @@ namespace client {
                                 const std::string& key,
                                 const std::string& path)
     {
-        client_path = path;
+        //client_path = path;
         //boost::filesystem::path p(message.c_str());
-
+        //check = "check";
         request_.version(10);
         request_.method(http::verb::get);
         request_.target("play");
@@ -164,11 +165,13 @@ namespace client {
     {
         if (!err)
         {
+            //std::cout<<client_path<<std::endl;
             beast::error_code ecdd;
-
+            
             // need create file for file from server
+            //size_before = response_file.body().size();
+            //std::cout<<"size_before bef" <<size_before<<std::endl;
             response_file.body().open(client_path.c_str(), boost::beast::file_mode::write, ecdd);
-
             // Handle the case where the file doesn't exist
             if (ecdd == beast::errc::no_such_file_or_directory)
                 std::cout << "Error: " << ecdd << "\n";
@@ -213,6 +216,7 @@ namespace client {
 
         }
     }
+    
 
     void Client::handle_write_last(beast::error_code err,
         std::size_t bytes_transferred)
