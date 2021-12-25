@@ -3,16 +3,19 @@
 #include "audio.h"
 
 
-#define CACHE "../voice_data/"
-#define SERVER "localhost 5000"
-#define PORT "80"
+#define CACHE "voice_data"
+#define PUSH_CACHE "/push_cache//"
+#define DOWNLOAD_CACHE "/download_cache//"
+#define SERVER "localhost"
+#define PORT "5000"
+#define CHUNCK_SIZE 524288 // 512 kb
 
 
-class client
+class application
 {
 public:
-  client();   
-  client(std::string server, std::string port);
+  application();   
+  application(std::string server, std::string port);
   
   void run();
 private:

@@ -5,21 +5,26 @@
 #include <filesystem>
 #include <cstdio>
 #include "application.h"
+#include "async.http.client.h"
+#include <array>
+#include <sys/stat.h>
+#include <time.h>
+#include <algorithm>
 
 
 
 
-client::client()
+application::application()
   : status(true), server(SERVER), port(PORT), cache_directory(CACHE){}
 
-client::client(std::string server, std::string port)
+application::application(std::string server, std::string port)
   : status(true), server(server), port(port), cache_directory(CACHE){}
 
 
 
 
 
-void client::run() {
+void application::run() {
   std::cout<<"client started" <<std::endl;
   while(status){
     std::cout<<std::endl;
@@ -75,31 +80,31 @@ void client::run() {
       std::cout << "file delection error" << std::endl;
       continue;
     }
-    // if (command[0] == "push") { //LIZA
-    //   push(command);
-    //   continue;
-    // }
-    // if (command[0] == "download") {  //LIZA
-    //   download(command);
-    //   continue;
-    // }
-    // if (command[0] == "show") {  // LIZA
-    //   show_server(command);
-    //   continue;
-    // }
+    if (command[0] == "push") { //LIZA
+      push(command);
+      continue;
+    }
+    if (command[0] == "download") {  //LIZA
+      download(command);
+      continue;
+    }
+    if (command[0] == "show") {  // LIZA
+      show_server(command);
+      continue;
+    }
     std::cout << "Incorrect command" << std::endl;
   }
 }
 
 
-void client::help() {
+void application::help() {
   std::cout << std::endl << std::endl;
   std::cout<<"action:\t\t\t\t\t\t command:"<<std::endl<<std::endl;
   std::cout<<"open directory:\t\t\t\t\t open your_directory" << std::endl;
   std::cout<<"record a voice message:\t\t\t\t record audio_message" << std::endl;
   std::cout<<"listen to the message:\t\t\t\t play audio_message" << std::endl;
   std::cout<<"send a message to the server:\t\t\t push audio_message" << std::endl;
-  std::cout<<"request a list of messages from the server:\t request" << std::endl;
+  std::cout<<"request a list of messages from the server:\t show" << std::endl;
   std::cout<<"remove file:\t\t\t\t\t remove your_file" << std::endl;
   std::cout<<"show audio files in current directory:\t\t ls" << std::endl;
   std::cout<<"close application:\t\t\t\t close" << std::endl;
@@ -107,14 +112,17 @@ void client::help() {
 }
 
 
-void client::ls() {
+void application::ls() {
   open(cache_directory);
   for (auto it = local_base.begin(); it!=local_base.end(); it++) {
-    std::cout<<"key: "<< it->first <<"\t"<< "path: " << it->second << std::endl;
+    struct stat t_stat;
+    stat(it->second.c_str(), &t_stat);
+    struct tm *timeinfo = localtime(&t_stat.st_ctime);
+    std::cout<<"file: "<< it->first <<"\t"<< "time: " << asctime(timeinfo);
   }
 }
 
-void client::update(std::string path, std::string extension) {
+void application::update(std::string path, std::string extension) {
   for (const auto & entry : std::filesystem::directory_iterator(path)) {
     if (entry.path().extension() == extension) {
       local_base[entry.path().stem()] = entry.path();
@@ -122,20 +130,28 @@ void client::update(std::string path, std::string extension) {
   }  
 }
 
-void client::open(std::string path) {
-  
-  if (!std::filesystem::exists(path)) {
-    std::filesystem::create_directories(path);
-    return;
+void application::open(std::string path) { 
+  if (path[path.size() - 1] != '/') {
+    path +='/';
   }
-  cache_directory = path;
-  local_base.clear();
-  update(path, ".wav");
-  update(path, ".mp3");
-  update(path, ".cd"); 
-}
+  try {
+    if (!std::filesystem::exists(path)) {
+      cache_directory = path;
+      std::filesystem::create_directories(path);
+      return;
+  }
+    cache_directory = path;
+    local_base.clear();
+    update(path, ".wav");
+    update(path, ".mp3");
+    update(path, ".cd"); 
+  } catch (std::exception &e) {
+    std::cout << "Incorrect input" << std::endl;
+    }
+  }
 
-bool client::remove(std::string key) {
+
+bool application::remove(std::string key) {
   if (std::filesystem::remove(local_base[key])) {
     local_base.erase(key);
     return true;
@@ -143,11 +159,12 @@ bool client::remove(std::string key) {
   return false;
 }
 
-void client::handler_play(std::vector<std::string> command) {
+void application::handler_play(std::vector<std::string> command) {
   if (command.size() < 2 || command.size() > 3) {
     std::cout<<"Incorrect input" << std::endl;
     return;
   }
+  open(cache_directory);
   if (!local_base.count(command[1])) {
     std::cout<<"There in no file with such a key. Try again." <<std::endl;
     return;
@@ -157,20 +174,20 @@ void client::handler_play(std::vector<std::string> command) {
     try {
       time = std::stod(command[2]);
     } catch (std::invalid_argument const& ex){
-      std::cout << "invalid time" << std::endl;
+      std::cout << "Invalid time" << std::endl;
       return;
     }
   }
   if (time >1 || time < 0) {
-    std::cout<<"invalid range try from 0 to 1" << std::endl;
+    std::cout<<"Invalid range try from 0 to 1" << std::endl;
     return;
   }
   play(local_base[command[1]], time);
 }
 
 
-void client::play(std::string path, double time) {
-  open(cache_directory);
+void application::play(std::string path, double time) {
+  
   audio::play speaker;
   speaker.set_file(path);
   speaker.set_time(time);
@@ -218,7 +235,7 @@ void client::play(std::string path, double time) {
 
 
 
-void client::handler_record(std::vector<std::string> command) {
+void application::handler_record(std::vector<std::string> command) {
   open(cache_directory);
   if (command.size() < 2 || command.size() > 3) {
     std::cout<<"Incorrect command" << std::endl;
@@ -241,12 +258,11 @@ void client::handler_record(std::vector<std::string> command) {
     }
   }
   std::string path = cache_directory + command[1] + extension;
-
   record(path);
 }
 
 
-void client::record(std::string path) {
+void application::record(std::string path) {
   std::string extension = std::filesystem::path(path).extension();
   audio::record microphone;
   if (extension == ".mp3") {
@@ -274,6 +290,110 @@ void client::record(std::string path) {
   microphone.off();
   th.join();
   th1.join();
-
   local_base[std::filesystem::path(path).stem()] = path;
 }
+
+
+ // LIZA
+void application::show_server(std::vector<std::string> command) {
+  net::io_context io_context;
+  std::make_shared<client::Client>(io_context)->show_server(server, port);
+  io_context.run();
+};
+
+ 
+void application::push(std::vector<std::string> command) {
+
+  std::string path = cache_directory + PUSH_CACHE;
+  std::filesystem::create_directories(path);
+
+  std::string path_i = cache_directory + PUSH_CACHE + command[1] + ".wav";  // название текущего файла
+  std::ofstream file_i;
+
+  std::ifstream file(local_base[command[1]], std::ifstream::ate | std::ifstream::binary);  // устанавливаю указатель в конец файла
+  size_t size = file.tellg();  // считаю размер файла
+  file.seekg(0, std::ios_base::beg); // устанавливаю указатель в начало файла
+  size_t pos = file.tellg();  // устанавливаю текующую позицию
+  char chunck[CHUNCK_SIZE];  // буфер для чтения
+  while (pos < size) {
+    if (pos + CHUNCK_SIZE < size) {
+      file.read(chunck, CHUNCK_SIZE);  // читаю чанк данных
+      file_i.open(path_i, std::ifstream::binary); // создаю и открываю файл 
+      file_i.write(chunck, CHUNCK_SIZE);  // записываю чанк в файл
+      file_i.close();
+      pos += CHUNCK_SIZE;
+      net::io_context io_context;
+      std::make_shared<client::Client>(io_context)->push(server, port, path_i);
+      io_context.run();
+    } else {
+      std::ofstream file_i(path_i, std::ifstream::binary);
+      file_i.write(chunck, size - pos);
+      file_i.close();
+      net::io_context io_context;
+      std::make_shared<client::Client>(io_context)->push(server, port, path_i);
+      io_context.run();
+      pos = size;
+    }
+  }
+  /* отправляю пустой файл*/
+  file_i.open(path_i, std::ifstream::binary); // создаю и открываю
+  net::io_context io_context;
+  std::make_shared<client::Client>(io_context)->push(server, port, path_i);
+  io_context.run();
+
+  file.close();
+  std::filesystem::remove_all(path);
+}
+
+void application::download(std::vector<std::string> command) {
+  std::string path = cache_directory + DOWNLOAD_CACHE;  // временная директория
+  std::filesystem::create_directories(path);
+  std::string file_path = cache_directory + '/' + command[1] + ".wav"; // путь финального файла
+  std::string path_i = cache_directory + DOWNLOAD_CACHE + command[1] + ".wav";  // путь временного файла
+  std::ofstream file(file_path, std::ifstream::binary);  // переменная для записи результата
+  std::ifstream file_i;  // переменная для временного файла
+  char chunck[CHUNCK_SIZE];  // буфер для чтения
+  while (true) {
+    net::io_context io_context;
+    std::make_shared<client::Client>(io_context)->download(server, port, command[1], path_i);
+    io_context.run();
+    file_i.open(path_i, std::ifstream::ate | std::ifstream::binary);
+    size_t size = file_i.tellg();
+    if (size == 0) {
+      file_i.close();
+      break;
+    }
+    file_i.seekg(0, std::ios_base::beg); // устанавливаю указатель в начало файла
+    file_i.read(chunck, size); // 
+    file_i.close();
+    file.write(chunck, size);
+  }
+  file.close();
+}
+
+
+// void application::download(std::vector<std::string> command) {
+
+//   /* сливаю временные файлы и удаляю временную директорию*/
+//   std::string path = cache_directory + DOWNLOAD_CACHE;  // временная директория
+//   std::vector<std::string> files;
+//   for (const auto & entry : std::filesystem::directory_iterator(path)) {
+//     files.push_back(entry.path());  // вектор файлов из которых собирать
+//   }  
+  
+//   std::sort(files.begin(), files.end());  // файлы иногда перемешиваются, сортирую
+//   char chunck[CHUNCK_SIZE];  // буфер для чтения
+//   std::ifstream file_i;  // переменная для перебора всех файлов
+//   std::string file_path = cache_directory + '/' + command[1] + ".wav";
+//   std::ofstream file(file_path, std::ifstream::binary);  // переменная для записи результата
+//   for (size_t i = 0 ; i < files.size(); i++) {
+//     file_i.open(files[i], std::ifstream::ate | std::ifstream::binary);
+//     size_t size = file_i.tellg();  // считаю размер файла
+//     file_i.seekg(0, std::ios_base::beg); // устанавливаю указатель в начало файла
+//     file_i.read(chunck, size);
+//     file_i.close();
+//     file.write(chunck, size);
+//   }
+//   file.close();
+//   std::filesystem::remove_all(path);
+// }
