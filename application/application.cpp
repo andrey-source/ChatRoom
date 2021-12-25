@@ -323,14 +323,14 @@ void application::push(std::vector<std::string> command) {
       file_i.close();
       pos += CHUNCK_SIZE;
       net::io_context io_context;
-      std::make_shared<client::Client>(io_context)->push(server, port, path_i);
+      std::make_shared<client::Client>(io_context)->push(server, port, command[1], path_i);
       io_context.run();
     } else {
       std::ofstream file_i(path_i, std::ifstream::binary);
       file_i.write(chunck, size - pos);
       file_i.close();
       net::io_context io_context;
-      std::make_shared<client::Client>(io_context)->push(server, port, path_i);
+      std::make_shared<client::Client>(io_context)->push(server, port, command[1], path_i);
       io_context.run();
       pos = size;
     }
@@ -338,7 +338,7 @@ void application::push(std::vector<std::string> command) {
   /* отправляю пустой файл*/
   file_i.open(path_i, std::ifstream::binary); // создаю и открываю
   net::io_context io_context;
-  std::make_shared<client::Client>(io_context)->push(server, port, path_i);
+  std::make_shared<client::Client>(io_context)->push(server, port, command[1], path_i);
   io_context.run();
 
   file.close();
@@ -346,6 +346,12 @@ void application::push(std::vector<std::string> command) {
 }
 
 void application::download(std::vector<std::string> command) {
+  if (local_base.count(command[1])) {
+    std::cout<<"A file with such a key already exists" << std::endl;
+    return; 
+  }
+
+
   std::string path = cache_directory + DOWNLOAD_CACHE;  // временная директория
   std::filesystem::create_directories(path);
   std::string file_path = cache_directory + '/' + command[1] + ".wav"; // путь финального файла
