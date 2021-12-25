@@ -22,6 +22,7 @@ private:
   bool status;
   void help();
   void ls();
+  void rename(std::vector<std::string> command);
   void open(std::string path);
   void off() {status =false;}
   void play(std::string path, double time);

@@ -56,6 +56,10 @@ void application::run() {
       open(command[1]);
       continue;
     }
+    if (command[0] == "rename") {
+      rename(command);
+      continue;
+    }
     if (command[0] == "close") {
       off();
       continue;
@@ -350,8 +354,6 @@ void application::download(std::vector<std::string> command) {
     std::cout<<"A file with such a key already exists" << std::endl;
     return; 
   }
-
-
   std::string path = cache_directory + DOWNLOAD_CACHE;  // временная директория
   std::filesystem::create_directories(path);
   std::string file_path = cache_directory + '/' + command[1] + ".wav"; // путь финального файла
@@ -377,29 +379,17 @@ void application::download(std::vector<std::string> command) {
   file.close();
 }
 
-
-// void application::download(std::vector<std::string> command) {
-
-//   /* сливаю временные файлы и удаляю временную директорию*/
-//   std::string path = cache_directory + DOWNLOAD_CACHE;  // временная директория
-//   std::vector<std::string> files;
-//   for (const auto & entry : std::filesystem::directory_iterator(path)) {
-//     files.push_back(entry.path());  // вектор файлов из которых собирать
-//   }  
-  
-//   std::sort(files.begin(), files.end());  // файлы иногда перемешиваются, сортирую
-//   char chunck[CHUNCK_SIZE];  // буфер для чтения
-//   std::ifstream file_i;  // переменная для перебора всех файлов
-//   std::string file_path = cache_directory + '/' + command[1] + ".wav";
-//   std::ofstream file(file_path, std::ifstream::binary);  // переменная для записи результата
-//   for (size_t i = 0 ; i < files.size(); i++) {
-//     file_i.open(files[i], std::ifstream::ate | std::ifstream::binary);
-//     size_t size = file_i.tellg();  // считаю размер файла
-//     file_i.seekg(0, std::ios_base::beg); // устанавливаю указатель в начало файла
-//     file_i.read(chunck, size);
-//     file_i.close();
-//     file.write(chunck, size);
-//   }
-//   file.close();
-//   std::filesystem::remove_all(path);
-// }
+void application::rename(std::vector<std::string> command) {
+  if (command.size() != 3) {
+    std::cout << "Incorrect input"<<std::endl;
+    return; 
+  }
+  try {
+    std::filesystem::path old_path = local_base[command[1]];
+    std::filesystem::path new_path = cache_directory + command[2] + ".wav";
+    std::filesystem::rename(old_path, new_path);
+  } catch (std::invalid_argument const& ex){
+    std::cout << "Invalid arguments" << std::endl;
+    return;
+  }
+}
