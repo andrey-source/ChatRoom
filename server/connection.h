@@ -1,0 +1,89 @@
+#ifndef BOOST_ASIO_SERVER_CONNECTION_H
+#define BOOST_ASIO_SERVER_CONNECTION_H
+
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/beast/version.hpp>
+#include <boost/asio/dispatch.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/config.hpp>
+#include <algorithm>
+#include <cstdlib>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <thread>
+#include <vector>
+#include <map>
+#include <filesystem>
+
+
+#define DATA_SERVER "../data_server/"
+
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
+
+namespace server3 {
+
+        class Connection: public std::enable_shared_from_this<Connection>
+        {
+        public:
+            /// Construct a connection with the given io_context.
+            explicit Connection(tcp::socket&& socket);
+
+
+            /// Start the first asynchronous operation for the connection.
+            void start();
+
+        private:
+            void do_read();
+            void do_read_first();
+            /// Handle completion of a read operation.
+            void handle_read(beast::error_code e,
+                             std::size_t bytes_transferred);
+
+            void handle_read_first(beast::error_code e,
+                             std::size_t bytes_transferred);
+            void read_requiest(beast::error_code e,
+                                      std::size_t bytes_transferred);
+            /// Handle completion of a write operation.
+            void handle_write(bool close,
+                              beast::error_code e,
+                              std::size_t bytes_transferred);
+
+            void handle_write_first(beast::error_code e,
+                              std::size_t bytes_transferred);
+            void handle_write_last(beast::error_code e,
+                              std::size_t bytes_transferred);
+
+            void do_close();
+           // void handle_read_file();
+            void show_base(std::stringstream& key_path,std::string& server_path);
+            std::size_t number_of_files(std::filesystem::path path);
+
+        private:
+            /// The handler used to process the incoming request.
+            //Router<Response(*)(const Request &request)> &requestRouter_;
+
+            beast::tcp_stream stream_;
+            beast::multi_buffer buffer_File;
+            beast::flat_buffer buffer_req;
+            beast::flat_buffer buffer_;
+            std::string server_path = DATA_SERVER;
+            int flag;
+            std::map<std::string, std::string> local_base;
+            boost::beast::string_view s ;
+            std::size_t count_file;
+            http::request<http::string_body> request_;
+            http::request<http::file_body> request_file;
+            http::response<http::string_body> res;
+            http::response<http::file_body> res_file;
+            std::shared_ptr<void> res_;
+        };
+} // namespace server3
+
+
+#endif //BOOST_ASIO_SERVER_CONNECTION_H
